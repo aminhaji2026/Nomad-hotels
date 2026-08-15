@@ -97,11 +97,10 @@ select {
 }
 
 .brand-mark {
-  width: 0.95rem;
-  height: 0.95rem;
-  border: 2px solid var(--signal);
-  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
-  background: transparent;
+  width: 1rem;
+  height: 1rem;
+  color: var(--signal);
+  flex-shrink: 0;
 }
 
 .brand-word {
@@ -259,6 +258,12 @@ select {
   max-width: 40rem;
   margin-bottom: 2rem;
   animation: rise 700ms ease both;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.section__intro p {
+  margin: 0;
 }
 
 .section__intro h1,
