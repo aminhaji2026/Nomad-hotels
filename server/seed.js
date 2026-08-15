@@ -9,12 +9,16 @@ export const seedStays = [
     neighborhood: 'Road 1 · Dahabshiil Business Centre',
     type: 'hotel',
     typeLabel: 'Business Hotel',
-    image:
-      'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1400&q=80',
+    image: '/hotels/damal/cover.jpg',
     gallery: [
-      'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1400&q=80',
-      'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1611892440504-42a792e24d32?auto=format&fit=crop&w=1200&q=80',
+      '/hotels/damal/cover.jpg',
+      '/hotels/damal/exterior.jpg',
+      '/hotels/damal/lobby.jpg',
+      '/hotels/damal/deluxe.jpg',
+      '/hotels/damal/super.jpg',
+      '/hotels/damal/vip.jpg',
+      '/hotels/damal/family.jpg',
+      '/hotels/damal/resto.jpg',
     ],
     nightlyFrom: 85,
     rating: 4.7,
@@ -31,8 +35,7 @@ export const seedStays = [
       bed: 'Double Bed',
       guests: 2,
       sizeSqm: 28,
-      image:
-        'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=800&q=80',
+      image: '/hotels/damal/deluxe.jpg',
       blurb:
         'Contemporary furnishings, private bathroom, satellite TV, high-speed Wi‑Fi, and daily breakfast included.',
     },
@@ -53,12 +56,15 @@ export const seedStays = [
     neighborhood: 'KM4 · near Sahal terminal',
     type: 'hotel',
     typeLabel: 'City Hotel',
-    image:
-      'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&w=1400&q=80',
+    image: '/hotels/holiday/hero.jpg',
     gallery: [
-      'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&w=1400&q=80',
-      'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80',
+      '/hotels/holiday/hero.jpg',
+      '/hotels/holiday/exterior.jpg',
+      '/hotels/holiday/lobby.jpg',
+      '/hotels/holiday/room1.jpg',
+      '/hotels/holiday/room2.jpg',
+      '/hotels/holiday/room3.jpg',
+      '/hotels/holiday/detail.jpg',
     ],
     nightlyFrom: 95,
     rating: 4.6,
@@ -75,8 +81,7 @@ export const seedStays = [
       bed: 'Twin / King',
       guests: 2,
       sizeSqm: 30,
-      image:
-        'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=800&q=80',
+      image: '/hotels/holiday/room1.jpg',
       blurb:
         'Clean air-conditioned room with private bath, workspace, and complimentary breakfast options.',
     },
@@ -84,6 +89,7 @@ export const seedStays = [
     contact: {
       phone: '+252 61 3885999',
       email: 'info@holidayhotel.so',
+      website: 'https://holidayhotel.so',
       checkIn: '14:00',
       checkOut: '12:00',
     },

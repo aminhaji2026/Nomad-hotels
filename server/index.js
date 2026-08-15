@@ -24,16 +24,20 @@ function ensureSeed() {
       db.stays.push({ ...stay, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
       changed = true
     } else if (stay.id === 'damal-hotel-hargeisa' || stay.id === 'holiday-hotel-mogadishu') {
-      // Keep curated info fresh while preserving uploaded images if present
+      // Refresh curated listing photos/info; keep any host uploads appended
       const uploaded = (existing.gallery || []).filter((url) => String(url).startsWith('/uploads/'))
+      const gallery = Array.from(new Set([...(stay.gallery || []), ...uploaded]))
       const image = existing.image?.startsWith('/uploads/') ? existing.image : stay.image
-      const gallery = uploaded.length
-        ? [image, ...uploaded.filter((u) => u !== image), ...stay.gallery.filter((u) => !uploaded.includes(u))]
-        : stay.gallery
       Object.assign(existing, {
         ...stay,
         image,
-        gallery: Array.from(new Set(gallery)),
+        gallery,
+        room: {
+          ...stay.room,
+          ...(existing.room?.image?.startsWith('/uploads/')
+            ? { image: existing.room.image }
+            : {}),
+        },
         updatedAt: new Date().toISOString(),
       })
       changed = true
