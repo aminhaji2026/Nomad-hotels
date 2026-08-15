@@ -372,5 +372,30 @@ export function nightsBetween(checkIn: string, checkOut: string) {
 
 export function addonsForCity(city: string) {
   const local = addons.filter((a) => a.city.toLowerCase() === city.toLowerCase())
-  return local.length ? local : addons.filter((a) => a.city === 'Dubai')
+  if (local.length) return local
+  // Generic premium upsells when city-specific catalog is empty
+  return [
+    {
+      id: 'generic-transfer',
+      kind: 'transfer' as const,
+      name: 'Airport Transfer',
+      detail: `${city} airport → hotel`,
+      image:
+        'https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?auto=format&fit=crop&w=800&q=80',
+      priceFrom: 90,
+      unit: 'trip',
+      city,
+    },
+    {
+      id: 'generic-vehicle',
+      kind: 'vehicle' as const,
+      name: 'Premium SUV',
+      detail: 'Chauffeur available',
+      image:
+        'https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?auto=format&fit=crop&w=800&q=80',
+      priceFrom: 180,
+      unit: 'day',
+      city,
+    },
+  ]
 }
