@@ -2,13 +2,6 @@ import type { Addon, Destination, Stay, Trip, Vehicle } from '../types'
 
 export const destinations: Destination[] = [
   {
-    id: 'dubai',
-    name: 'Dubai',
-    country: 'UAE',
-    image:
-      'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=800&q=80',
-  },
-  {
     id: 'hargeisa',
     name: 'Hargeisa',
     country: 'Somaliland',
@@ -21,6 +14,13 @@ export const destinations: Destination[] = [
     country: 'Somalia',
     image:
       'https://images.unsplash.com/photo-1489392191049-fc10c97e64b6?auto=format&fit=crop&w=800&q=80',
+  },
+  {
+    id: 'dubai',
+    name: 'Dubai',
+    country: 'UAE',
+    image:
+      'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=800&q=80',
   },
   {
     id: 'nairobi',

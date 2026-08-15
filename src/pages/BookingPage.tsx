@@ -1,6 +1,8 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { stays } from '../data/catalog'
+import { api } from '../api'
+import { useUser } from '../context/UserContext'
+import { useStay } from '../hooks/useStays'
 import { AppShell } from '../components/AppShell'
 
 type Step = 'form' | 'checking' | 'confirmed'
@@ -9,17 +11,32 @@ export function BookingPage() {
   const { id } = useParams()
   const [params] = useSearchParams()
   const navigate = useNavigate()
-  const stay = stays.find((item) => item.id === id)
+  const { stay, loading } = useStay(id)
+  const { ensureSession, setIdentity, refresh } = useUser()
   const nights = Number(params.get('nights') || 4)
   const checkIn = params.get('checkIn') || '2025-05-24'
   const checkOut = params.get('checkOut') || '2025-05-28'
 
   const [step, setStep] = useState<Step>('form')
-  const [name, setName] = useState('Amin Hussein')
-  const [email, setEmail] = useState('aminhajihussein@gmail.com')
+  const [name, setName] = useState(localStorage.getItem('nomadstay-name') || 'Amin Hussein')
+  const [email, setEmail] = useState(
+    localStorage.getItem('nomadstay-email') || 'aminhajihussein@gmail.com',
+  )
   const [ref, setRef] = useState('')
+  const [pointsEarned, setPointsEarned] = useState(0)
+  const [error, setError] = useState<string | null>(null)
 
   const total = useMemo(() => (stay ? stay.nightlyFrom * nights : 0), [stay, nights])
+
+  if (loading) {
+    return (
+      <AppShell hideNav>
+        <main className="page-pad">
+          <p className="muted">Loading…</p>
+        </main>
+      </AppShell>
+    )
+  }
 
   if (!stay) {
     return (
@@ -32,13 +49,31 @@ export function BookingPage() {
     )
   }
 
-  function onSubmit(event: FormEvent) {
+  async function onSubmit(event: FormEvent) {
     event.preventDefault()
+    setError(null)
     setStep('checking')
-    window.setTimeout(() => {
-      setRef(`NS${stay!.city.slice(0, 3).toUpperCase()}${Date.now().toString().slice(-6)}`)
+    setIdentity(email, name)
+    try {
+      const user = await ensureSession({ email, name })
+      const data = await api.createBooking({
+        userId: user.id,
+        email,
+        name,
+        stayId: stay!.id,
+        checkIn,
+        checkOut,
+        nights,
+        total,
+      })
+      setRef(data.booking.bookingRef)
+      setPointsEarned(data.pointsEarned)
+      await refresh()
       setStep('confirmed')
-    }, 1100)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Booking failed')
+      setStep('form')
+    }
   }
 
   return (
@@ -64,6 +99,7 @@ export function BookingPage() {
               {checkIn} → {checkOut} · {nights} nights
             </p>
             <p className="price-gold">${total.toLocaleString()} estimated total</p>
+            <p className="muted small">Earn ~{Math.max(50, total * 10).toLocaleString()} loyalty points on this request.</p>
             <label>
               Full name
               <input value={name} onChange={(e) => setName(e.target.value)} required />
@@ -72,6 +108,7 @@ export function BookingPage() {
               Email
               <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
             </label>
+            {error && <p className="error-text">{error}</p>}
             <button type="submit" className="btn btn--gold btn--block">
               Request reservation
             </button>
@@ -85,7 +122,7 @@ export function BookingPage() {
           <div className="empty-card">
             <div className="spinner" aria-hidden="true" />
             <h2>Checking availability…</h2>
-            <p className="muted">Confirming rates with the property and concierge.</p>
+            <p className="muted">Confirming rates and calculating loyalty points.</p>
           </div>
         )}
 
@@ -94,13 +131,14 @@ export function BookingPage() {
             <span className="status-pill">REQUEST SENT</span>
             <h2>You’re on the list</h2>
             <p className="muted">
-              Reference <strong>{ref}</strong>. We’ll email {email} when the stay is confirmed.
+              Reference <strong>{ref}</strong>. We emailed {email}.
             </p>
+            <p className="price-gold">+{pointsEarned.toLocaleString()} loyalty points earned</p>
             <Link to="/trips" className="btn btn--gold">
               View My Trips
             </Link>
-            <Link to="/" className="gold-link">
-              Keep exploring
+            <Link to="/profile" className="gold-link">
+              See points balance
             </Link>
           </div>
         )}

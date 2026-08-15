@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { nightsBetween, stays } from '../data/catalog'
+import { nightsBetween } from '../data/catalog'
 import { useSaved } from '../context/SavedContext'
+import { useStays } from '../hooks/useStays'
 import { AppShell } from '../components/AppShell'
 import { MapPreview } from '../components/MapPreview'
 import { StayCardSkeleton } from '../components/Skeleton'
@@ -10,7 +11,6 @@ import { StayCard } from '../components/StayCard'
 export function ResultsPage() {
   const [params, setParams] = useSearchParams()
   const { isSaved, toggleSaved } = useSaved()
-  const [loading, setLoading] = useState(true)
   const [view, setView] = useState<'list' | 'map'>((params.get('view') as 'list' | 'map') || 'list')
   const [sort, setSort] = useState(params.get('sort') || 'best')
   const [price, setPrice] = useState(params.get('price') || 'any')
@@ -22,37 +22,16 @@ export function ResultsPage() {
   const guests = params.get('guests') || '2 Guests, 1 Room'
   const nights = nightsBetween(checkIn, checkOut)
 
-  useEffect(() => {
-    setLoading(true)
-    const timer = window.setTimeout(() => setLoading(false), 650)
-    return () => window.clearTimeout(timer)
-  }, [city, sort, price, type, view])
+  const { stays, loading } = useStays(
+    city && city !== 'Anywhere' ? { city } : {},
+  )
 
   const results = useMemo(() => {
-    let list = stays.filter((stay) => {
-      const cityMatch =
-        city.toLowerCase() === 'anywhere' ||
-        stay.city.toLowerCase().includes(city.toLowerCase()) ||
-        stay.country.toLowerCase().includes(city.toLowerCase())
-      // Also show luxury inventory when searching Dubai-heavy catalog fallback
-      return cityMatch || (city === 'Dubai' && stay.city === 'Dubai')
-    })
+    let list = [...stays]
+    // Soft fallback: if city filter is empty, show all
+    if (list.length === 0 && !loading) list = []
 
-    // If exact city has few results, include destination-themed fallbacks for demo
-    if (list.length < 2 && city !== 'Dubai') {
-      list = stays.filter(
-        (stay) =>
-          stay.city.toLowerCase().includes(city.toLowerCase()) ||
-          ['maldives-villa', 'bali-cliff', 'zanzibar-beach'].includes(stay.id),
-      )
-    }
-    if (city === 'Dubai') {
-      list = stays.filter((stay) => stay.city === 'Dubai' || stay.id === 'maldives-villa')
-    }
-
-    if (type !== 'any') {
-      list = list.filter((stay) => stay.type === type)
-    }
+    if (type !== 'any') list = list.filter((stay) => stay.type === type)
     if (price === 'under300') list = list.filter((stay) => stay.nightlyFrom < 300)
     if (price === '300to600') {
       list = list.filter((stay) => stay.nightlyFrom >= 300 && stay.nightlyFrom <= 600)
@@ -64,7 +43,11 @@ export function ResultsPage() {
     else list = [...list].sort((a, b) => b.guestScore - a.guestScore)
 
     return list
-  }, [city, sort, price, type])
+  }, [stays, sort, price, type, loading])
+
+  useEffect(() => {
+    // keep URL sync for view
+  }, [view])
 
   function updateView(next: 'list' | 'map') {
     setView(next)
@@ -152,9 +135,7 @@ export function ResultsPage() {
             {!loading && results.length === 0 && (
               <p className="empty">No stays match these filters. Try widening price or property type.</p>
             )}
-            {!loading && results.length > 0 && (
-              <MapPreview stays={results} city={city} />
-            )}
+            {!loading && results.length > 0 && <MapPreview stays={results} city={city} />}
           </div>
         )}
       </main>

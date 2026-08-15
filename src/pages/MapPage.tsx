@@ -1,10 +1,13 @@
 import { Link } from 'react-router-dom'
-import { stays } from '../data/catalog'
+import { useStays } from '../hooks/useStays'
 import { AppShell } from '../components/AppShell'
 import { MapPreview } from '../components/MapPreview'
 
 export function MapPage() {
-  const dubaiStays = stays.filter((stay) => stay.city === 'Dubai')
+  const { stays } = useStays()
+  const focus = stays.filter((stay) =>
+    ['Hargeisa', 'Mogadishu', 'Dubai'].includes(stay.city),
+  )
 
   return (
     <AppShell>
@@ -14,15 +17,15 @@ export function MapPage() {
             <strong>Map</strong>
             <span>Browse stays by neighborhood</span>
           </div>
-          <Link to="/results?city=Dubai&view=list" className="gold-link">
+          <Link to="/results?city=Hargeisa&view=list" className="gold-link">
             List
           </Link>
         </div>
       </header>
       <main className="page-pad">
-        <MapPreview stays={dubaiStays} city="Dubai" expanded />
+        <MapPreview stays={focus.length ? focus : stays} city="Hargeisa" expanded />
         <p className="muted" style={{ marginTop: '1rem' }}>
-          Tap a gold price pin in search results for full stay details. Map pins are demo-positioned for this MVP.
+          Includes Damal Hotel Hargeisa and Holiday Hotel Mogadishu. Map pins are approximate for this MVP.
         </p>
       </main>
     </AppShell>

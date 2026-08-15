@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { addonsForCity, nightsBetween, stays } from '../data/catalog'
+import { addonsForCity, nightsBetween } from '../data/catalog'
 import { useSaved } from '../context/SavedContext'
+import { useStay } from '../hooks/useStays'
 import { AppShell } from '../components/AppShell'
 
 export function StayDetailPage() {
@@ -10,14 +11,24 @@ export function StayDetailPage() {
   const navigate = useNavigate()
   const { isSaved, toggleSaved } = useSaved()
   const [photoIndex, setPhotoIndex] = useState(0)
+  const { stay, raw, loading, error } = useStay(id)
 
-  const stay = stays.find((item) => item.id === id)
   const checkIn = params.get('checkIn') || '2025-05-24'
   const checkOut = params.get('checkOut') || '2025-05-28'
   const nights = nightsBetween(checkIn, checkOut)
   const cityAddons = useMemo(() => (stay ? addonsForCity(stay.city) : []), [stay])
 
-  if (!stay) {
+  if (loading) {
+    return (
+      <AppShell hideNav>
+        <main className="page-pad">
+          <p className="muted">Loading stay…</p>
+        </main>
+      </AppShell>
+    )
+  }
+
+  if (!stay || error) {
     return (
       <AppShell>
         <main className="page-pad">
@@ -85,6 +96,27 @@ export function StayDetailPage() {
             </a>
           </p>
 
+          {raw?.contact && (raw.contact.phone || raw.contact.email || raw.contact.website) && (
+            <section className="contact-card">
+              <h2>Property info</h2>
+              {raw.contact.phone && <p>Phone · {raw.contact.phone}</p>}
+              {raw.contact.email && <p>Email · {raw.contact.email}</p>}
+              {raw.contact.website && (
+                <p>
+                  Web ·{' '}
+                  <a className="gold-link" href={raw.contact.website} target="_blank" rel="noreferrer">
+                    {raw.contact.website.replace(/^https?:\/\//, '')}
+                  </a>
+                </p>
+              )}
+              {(raw.contact.checkIn || raw.contact.checkOut) && (
+                <p className="muted small">
+                  Check-in {raw.contact.checkIn || '—'} · Check-out {raw.contact.checkOut || '—'}
+                </p>
+              )}
+            </section>
+          )}
+
           <div className="amenity-icons">
             {stay.highlights.map((item) => (
               <div key={item} className="amenity-icon">
@@ -105,9 +137,6 @@ export function StayDetailPage() {
                 {stay.room.bed} · {stay.room.guests} Guests · {stay.room.sizeSqm} m²
               </p>
               <p>{stay.room.blurb}</p>
-              <button type="button" className="gold-link">
-                Room Details
-              </button>
             </div>
           </article>
 
@@ -145,6 +174,13 @@ export function StayDetailPage() {
               ))}
             </div>
           </section>
+
+          <p className="muted small">
+            Earn loyalty points when you request this stay ·{' '}
+            <Link className="gold-link" to={`/host?stay=${stay.id}`}>
+              Upload photos / update info
+            </Link>
+          </p>
         </main>
 
         <div className="booking-bar">

@@ -1,9 +1,12 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { destinations, stays, vehicles } from '../data/catalog'
+import { destinations, vehicles } from '../data/catalog'
 import { useSaved } from '../context/SavedContext'
+import { useUser } from '../context/UserContext'
+import { useStays } from '../hooks/useStays'
 import { AppShell, BrandLockup } from '../components/AppShell'
 import { StayCard } from '../components/StayCard'
+import { StayCardSkeleton } from '../components/Skeleton'
 
 const categories = [
   { id: 'hotels', label: 'Hotels' },
@@ -15,25 +18,33 @@ const categories = [
 export function ExplorePage() {
   const navigate = useNavigate()
   const { isSaved, toggleSaved } = useSaved()
+  const { user, ensureSession } = useUser()
+  const { stays, loading } = useStays()
   const [category, setCategory] = useState<(typeof categories)[number]['id']>('hotels')
-  const [query, setQuery] = useState('Dubai')
+  const [query, setQuery] = useState('Hargeisa')
   const [dates, setDates] = useState('2025-05-24|2025-05-28')
   const [guests, setGuests] = useState('2 Guests, 1 Room')
 
-  const luxury = useMemo(
-    () => stays.filter((s) => ['maldives-villa', 'bali-cliff', 'zanzibar-beach'].includes(s.id)),
-    [],
+  const featured = useMemo(
+    () =>
+      stays.filter((s) =>
+        ['damal-hotel-hargeisa', 'holiday-hotel-mogadishu', 'address-downtown', 'maldives-villa'].includes(
+          s.id,
+        ),
+      ),
+    [stays],
   )
-  const topRated = useMemo(
-    () => stays.filter((s) => ['address-downtown', 'jazeer-hargeisa', 'four-seasons-dubai'].includes(s.id)),
-    [],
+  const topRated = useMemo(() => [...stays].sort((a, b) => b.rating - a.rating).slice(0, 3), [stays])
+  const luxury = useMemo(
+    () => stays.filter((s) => s.nightlyFrom >= 400 || s.type === 'holiday_home').slice(0, 4),
+    [stays],
   )
 
   function onSearch(event: FormEvent) {
     event.preventDefault()
     const [checkIn, checkOut] = dates.split('|')
     const params = new URLSearchParams({
-      city: query || 'Dubai',
+      city: query || 'Hargeisa',
       checkIn: checkIn || '2025-05-24',
       checkOut: checkOut || '2025-05-28',
       guests,
@@ -46,16 +57,27 @@ export function ExplorePage() {
     <AppShell>
       <header className="top-bar">
         <BrandLockup />
-        <button type="button" className="icon-btn" aria-label="Notifications">
-          ⌁
-          <span className="dot" />
-        </button>
+        <div className="top-bar__right">
+          {user ? (
+            <Link to="/profile" className="points-chip" title="Loyalty points">
+              ✦ {user.points.toLocaleString()} pts
+            </Link>
+          ) : (
+            <button type="button" className="points-chip" onClick={() => void ensureSession()}>
+              Join loyalty
+            </button>
+          )}
+          <button type="button" className="icon-btn" aria-label="Notifications">
+            ⌁
+            <span className="dot" />
+          </button>
+        </div>
       </header>
 
       <main className="page-pad explore">
         <section className="hero-home">
           <div>
-            <p className="eyebrow">Welcome back</p>
+            <p className="eyebrow">Welcome back{user ? `, ${user.name.split(' ')[0]}` : ''}</p>
             <h1>
               Discover your next <em>journey</em>
             </h1>
@@ -115,6 +137,26 @@ export function ExplorePage() {
             Search stays
           </button>
         </form>
+
+        <section className="rail-section">
+          <div className="section-head">
+            <h2>Horn of Africa picks</h2>
+          </div>
+          <div className="stack">
+            {loading
+              ? Array.from({ length: 2 }).map((_, i) => <StayCardSkeleton key={i} />)
+              : featured
+                  .filter((s) => ['damal-hotel-hargeisa', 'holiday-hotel-mogadishu'].includes(s.id))
+                  .map((stay) => (
+                    <StayCard
+                      key={stay.id}
+                      stay={stay}
+                      saved={isSaved(stay.id)}
+                      onToggleSave={toggleSaved}
+                    />
+                  ))}
+          </div>
+        </section>
 
         <section className="rail-section">
           <div className="section-head">

@@ -14,14 +14,19 @@ Aligned to the **NomadStay** premium dark/gold mockups (Explore, Results list/ma
 - [x] My Trips: countdown, itinerary, Manage Booking sheet
 - [x] Profile shell with concierge / trust messaging
 - [x] `.cursor/environment.json` for Cloud Agent installs
+- [x] Express backend serving API + SPA on Railway
+- [x] Loyalty points (welcome + booking earn)
+- [x] Referral points (share / redeem codes)
+- [x] Image upload + host console for hotel info
+- [x] Damal Hotel Hargeisa + Holiday Hotel Mogadishu listings
 
 ## Still recommended
 
-1. **Real catalog + availability API** (replace static `src/data/catalog.ts`)
+1. **Persistent volume / Postgres** for `data/` + `uploads/` across Railway redeploys
 2. **Payments** (deposit / pay-in-full) and live booking mutations
 3. **True map SDK** (Mapbox/Google) instead of demo pins
 4. **Auth** (magic link) so saved stays and trips sync across devices
-5. **Host / admin CMS** for rates, photos, and inventory
+5. **Host / admin CMS** hardening (auth for `/host`)
 6. **Playwright E2E** for search → detail → request → trips
 7. **Accessibility pass** on gold/grey contrast for WCAG AA
 8. **Responsive `srcset` / image CDN** for hero photography

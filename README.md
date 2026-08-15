@@ -1,6 +1,6 @@
 # NomadStay
 
-Premium travel booking experience inspired by the NomadStay mobile UI — handpicked hotels, villas, vehicles, and concierge-ready trips.
+Premium travel booking experience with a React frontend and Express API — loyalty points, referrals, image uploads, and Horn of Africa inventory including **Damal Hotel Hargeisa** and **Holiday Hotel Mogadishu**.
 
 ## Live
 
@@ -10,31 +10,43 @@ https://workspace-production-3ef2.up.railway.app
 
 ```bash
 npm install
-npm run dev
+npm run dev:all   # Vite :5173 + API :3001 (proxied)
 ```
+
+Or separately:
+
+```bash
+npm run dev:api   # API on :3000 (or PORT)
+npm run dev       # Vite with /api proxy → :3001 if using dev:all
+```
+
+Production:
 
 ```bash
 npm run build
-npm start   # serves dist on $PORT (Railway)
+npm start         # Express serves API + dist SPA
 ```
 
-## App routes
+## Features
 
-| Route | Screen |
-| --- | --- |
-| `/` | Explore home (search, destinations, luxury, vehicles) |
-| `/results` | Search results with **List / Map** toggle + filters |
-| `/stay/:id` | Property detail, add-ons, sticky booking bar |
-| `/book/:id` | Availability request → confirmation |
-| `/trips` | My Trips itinerary + manage booking |
-| `/saved` | Saved stays (local) |
-| `/map` | Map browsing |
-| `/profile` | Profile / concierge |
+- Explore / results / stay detail / booking / trips / saved / map / profile
+- **Loyalty points** — welcome bonus, booking earn rate ($1 → 10 pts)
+- **Referral points** — share code; referrer +500, friend +250
+- **Host console** (`/host`) — upload hotel images and edit info
+- Seeded listings for Damal Hotel (Hargeisa) and Holiday Hotel (Mogadishu)
 
-## Stack
+## API
 
-Vite · React · TypeScript · React Router
+| Method | Path | Purpose |
+| --- | --- | --- |
+| GET | `/api/stays` | List stays (`?city=`) |
+| GET | `/api/stays/:id` | Stay detail |
+| POST/PATCH | `/api/stays` | Create / update + image upload |
+| POST | `/api/uploads` | Upload images |
+| POST | `/api/auth/session` | Create/get loyalty user |
+| POST | `/api/referrals/redeem` | Apply referral code |
+| POST | `/api/bookings` | Request stay + award points |
 
 ## Improvements
 
-See [IMPROVEMENTS.md](./IMPROVEMENTS.md) for completed work and next backend/product steps.
+See [IMPROVEMENTS.md](./IMPROVEMENTS.md).
