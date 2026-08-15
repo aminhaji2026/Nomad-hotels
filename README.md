@@ -2,7 +2,11 @@
 
 Premium travel booking experience inspired by the NomadStay mobile UI — handpicked hotels, villas, vehicles, and concierge-ready trips.
 
-## Run
+## Live
+
+https://workspace-production-3ef2.up.railway.app
+
+## Run locally
 
 ```bash
 npm install
@@ -11,7 +15,7 @@ npm run dev
 
 ```bash
 npm run build
-npm run preview
+npm start   # serves dist on $PORT (Railway)
 ```
 
 ## App routes
