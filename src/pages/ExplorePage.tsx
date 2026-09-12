@@ -12,9 +12,9 @@ import { categoryIcons } from '../components/LuxIcons'
 
 const categories = [
   { id: 'hotels', label: 'Hotels', short: 'Hotels' },
-  { id: 'holiday_homes', label: 'Holiday homes', short: 'Homes' },
+  { id: 'holiday_homes', label: 'Holiday homes', short: 'Holiday' },
   { id: 'guest_houses', label: 'Guest houses', short: 'Guests' },
-  { id: 'vehicles', label: 'Car Rental', short: 'Cars' },
+  { id: 'vehicles', label: 'Car Rental', short: 'Rental' },
 ] as const
 
 export function ExplorePage() {
