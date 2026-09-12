@@ -277,12 +277,7 @@ export function StayDetailPage() {
             />
           </section>
 
-          <p className="muted small">
-            Earn loyalty points when you request this stay ·{' '}
-            <Link className="gold-link" to={`/host?stay=${stay.id}`}>
-              Upload photos / update info
-            </Link>
-          </p>
+          <p className="muted small">Earn loyalty points when you request this stay.</p>
         </main>
 
         <div className="booking-bar">

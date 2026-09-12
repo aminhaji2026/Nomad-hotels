@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
+import { CUSTOMER_APP_URL } from '../appSurface'
 import { useAuth } from '../context/AuthContext'
 import { AppShell, BrandLockup } from '../components/AppShell'
 
@@ -96,9 +97,12 @@ export function StaffLoginPage() {
           ))}
         </div>
 
-        <p className="muted small auth-page__foot">
-          Travelling with us? <Link to="/login">Guest login</Link>
-        </p>
+        {CUSTOMER_APP_URL ? (
+          <p className="muted small auth-page__foot">
+            Travelling with us?{' '}
+            <a href={`${CUSTOMER_APP_URL}/login`}>Open the guest app</a>
+          </p>
+        ) : null}
       </main>
     </AppShell>
   )

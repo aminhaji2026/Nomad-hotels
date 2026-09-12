@@ -1,6 +1,8 @@
 import cors from 'cors'
 import express from 'express'
 import fs from 'node:fs'
+import http from 'node:http'
+import https from 'node:https'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import multer from 'multer'
@@ -194,7 +196,35 @@ const upload = multer({
 const app = express()
 app.use(cors())
 app.use(express.json({ limit: '2mb' }))
-app.use('/uploads', express.static(UPLOAD_DIR))
+
+/** When set (ops service), proxy API/uploads to the customer API instead of using a local DB. */
+const API_UPSTREAM = String(process.env.API_UPSTREAM || '').replace(/\/$/, '')
+
+function proxyUpstream(req, res) {
+  const target = new URL(req.originalUrl || req.url, API_UPSTREAM)
+  const lib = target.protocol === 'https:' ? https : http
+  const headers = { ...req.headers, host: target.host }
+  const proxyReq = lib.request(
+    target,
+    { method: req.method, headers },
+    (proxyRes) => {
+      res.writeHead(proxyRes.statusCode || 502, proxyRes.headers)
+      proxyRes.pipe(res)
+    },
+  )
+  proxyReq.on('error', (err) => {
+    console.error('API upstream proxy failed', err)
+    if (!res.headersSent) res.status(502).json({ error: 'Upstream API unavailable' })
+  })
+  req.pipe(proxyReq)
+}
+
+if (API_UPSTREAM) {
+  app.use('/api', proxyUpstream)
+  app.use('/uploads', proxyUpstream)
+} else {
+  app.use('/uploads', express.static(UPLOAD_DIR))
+}
 
 app.get('/api/health', (_req, res) => {
   res.json({
