@@ -1076,29 +1076,217 @@ app.get('/api/hotel/calendar', authRequired, requireRoles('hotel_admin', 'admin'
 })
 
 // ── Platform admin ──
-app.get('/api/admin/dashboard', authRequired, requireRoles('admin'), (_req, res) => {
+app.get('/api/admin/dashboard', authRequired, requireRoles('admin'), (req, res) => {
   const db = loadDb()
+  const today = new Date()
+  const todayIso = today.toISOString().slice(0, 10)
+  const inDays = (n) => {
+    const d = new Date(today)
+    d.setDate(d.getDate() + n)
+    return d.toISOString().slice(0, 10)
+  }
+  const weekEnd = inDays(7)
+
   const customers = db.users.filter((u) => (u.role || 'customer') === 'customer')
   const hotelAdmins = db.users.filter((u) => u.role === 'hotel_admin')
-  const revenue = db.bookings
-    .filter((b) => b.paymentStatus === 'PAID')
-    .reduce((s, b) => s + Number(b.total || 0), 0)
+  const stays = db.stays || []
+  const bookings = db.bookings || []
+  const payments = db.payments || []
+
+  const published = stays.filter((s) => (s.status || 'published') === 'published')
+  const archived = stays.filter((s) => s.status === 'archived')
+  const suspended = stays.filter((s) => s.status === 'suspended')
+  const featured = stays.filter((s) => s.featured)
+  const activeBookings = bookings.filter((b) => !['CANCELLED', 'NO_SHOW'].includes(String(b.status || '').toUpperCase()))
+  const paidBookings = bookings.filter((b) => b.paymentStatus === 'PAID')
+  const cancelled = bookings.filter((b) => String(b.status || '').toUpperCase() === 'CANCELLED')
+  const noShows = bookings.filter((b) => String(b.status || '').toUpperCase() === 'NO_SHOW')
+
+  const grossBookingValue = activeBookings.reduce((s, b) => s + Number(b.total || 0), 0)
+  const revenue = paidBookings.reduce((s, b) => s + Number(b.total || 0), 0)
+  const commissionRate = Number(db.settings?.defaultCommissionRate ?? 0.12)
+  const commissionEarned = Math.round(revenue * commissionRate)
+  const pendingPayments = payments.filter((p) => p.status === 'PENDING')
+  const completedRefunds = payments.filter((p) => String(p.status || '').toUpperCase() === 'REFUNDED')
+
+  const todaysBookings = bookings.filter((b) => String(b.createdAt || '').slice(0, 10) === todayIso)
+  const currentGuests = activeBookings.filter((b) => b.checkIn <= todayIso && b.checkOut > todayIso)
+  const upcomingArrivals = activeBookings.filter((b) => b.checkIn >= todayIso && b.checkIn <= weekEnd)
+  const upcomingDepartures = activeBookings.filter((b) => b.checkOut >= todayIso && b.checkOut <= weekEnd)
+
+  const avgBookingValue =
+    paidBookings.length > 0 ? Math.round(revenue / paidBookings.length) : 0
+  const avgLengthOfStay =
+    paidBookings.length > 0
+      ? Number(
+          (
+            paidBookings.reduce((s, b) => s + Number(b.nights || 0), 0) / paidBookings.length
+          ).toFixed(1),
+        )
+      : 0
+
+  const byStay = new Map()
+  for (const b of paidBookings) {
+    const key = b.stayId || b.stayName || 'unknown'
+    const row = byStay.get(key) || { stayId: b.stayId, stayName: b.stayName, bookings: 0, revenue: 0 }
+    row.bookings += 1
+    row.revenue += Number(b.total || 0)
+    byStay.set(key, row)
+  }
+  const topHotels = [...byStay.values()].sort((a, b) => b.revenue - a.revenue).slice(0, 5)
+
+  const byCity = new Map()
+  for (const b of paidBookings) {
+    const city = b.city || stays.find((s) => s.id === b.stayId)?.city || 'Unknown'
+    const row = byCity.get(city) || { city, bookings: 0, revenue: 0 }
+    row.bookings += 1
+    row.revenue += Number(b.total || 0)
+    byCity.set(city, row)
+  }
+  const topDestinations = [...byCity.values()].sort((a, b) => b.bookings - a.bookings).slice(0, 5)
+
+  const byRoom = new Map()
+  for (const b of bookings) {
+    const label = b.roomName || b.roomId || 'Standard'
+    byRoom.set(label, (byRoom.get(label) || 0) + 1)
+  }
+  const topRoomTypes = [...byRoom.entries()]
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5)
+
+  const bySource = new Map()
+  for (const b of bookings) {
+    const source = b.source || 'direct'
+    bySource.set(source, (bySource.get(source) || 0) + 1)
+  }
+
+  const range = String(req.query.range || '30')
+  const rangeDays = Number(range) || 30
+  const rangeStart = inDays(-rangeDays)
+  const rangeBookings = bookings.filter((b) => String(b.createdAt || '').slice(0, 10) >= rangeStart)
+  const previousStart = inDays(-rangeDays * 2)
+  const previousBookings = bookings.filter((b) => {
+    const day = String(b.createdAt || '').slice(0, 10)
+    return day >= previousStart && day < rangeStart
+  })
+  const customerGrowth =
+    previousBookings.length === 0
+      ? rangeBookings.length > 0
+        ? 100
+        : 0
+      : Math.round(((rangeBookings.length - previousBookings.length) / previousBookings.length) * 100)
+
   res.json({
     summary: {
-      stays: db.stays.length,
+      stays: stays.length,
+      publishedHotels: published.length,
+      archivedHotels: archived.length,
+      suspendedHotels: suspended.length,
+      featuredHotels: featured.length,
       customers: customers.length,
       hotelAdmins: hotelAdmins.length,
-      bookings: db.bookings.length,
-      payments: db.payments.length,
+      bookings: bookings.length,
+      todaysBookings: todaysBookings.length,
+      currentGuests: currentGuests.length,
+      upcomingArrivals: upcomingArrivals.length,
+      upcomingDepartures: upcomingDepartures.length,
+      payments: payments.length,
+      grossBookingValue,
       revenue,
-      pendingPayments: db.payments.filter((p) => p.status === 'PENDING').length,
+      commissionRate,
+      commissionEarned,
+      pendingPayments: pendingPayments.length,
+      outstandingPayouts: commissionEarned, // placeholder until payout ledger exists
+      completedRefunds: completedRefunds.length,
+      cancellationRate:
+        bookings.length > 0 ? Number(((cancelled.length / bookings.length) * 100).toFixed(1)) : 0,
+      noShowRate: bookings.length > 0 ? Number(((noShows.length / bookings.length) * 100).toFixed(1)) : 0,
+      avgBookingValue,
+      avgLengthOfStay,
+      customerGrowth,
+      unresolvedSupport: (db.messages || []).filter((m) => m.status === 'open').length,
+      pendingApplications: stays.filter((s) => s.status === 'pending').length,
     },
-    recentBookings: db.bookings.slice(0, 15),
-    recentPayments: db.payments.slice(0, 15),
+    topHotels,
+    topDestinations,
+    topRoomTypes,
+    bookingSources: [...bySource.entries()].map(([source, count]) => ({ source, count })),
+    alerts: [
+      pendingPayments.length
+        ? { level: 'warn', text: `${pendingPayments.length} payments awaiting confirmation` }
+        : null,
+      suspended.length ? { level: 'warn', text: `${suspended.length} properties suspended` } : null,
+      !duffel.duffelConfigured()
+        ? { level: 'info', text: 'Duffel Stay running in mock mode' }
+        : { level: 'ok', text: 'Duffel Stay connected' },
+    ].filter(Boolean),
+    recentBookings: bookings.slice(0, 15),
+    recentPayments: payments.slice(0, 15),
     audit: (db.audit || []).slice(0, 20),
     duffel: duffel.duffelStatus(),
     settings: db.settings,
+    range: rangeDays,
   })
+})
+
+app.get('/api/admin/stays', authRequired, requireRoles('admin'), (_req, res) => {
+  const db = loadDb()
+  const stays = [...(db.stays || [])].sort(
+    (a, b) => Number(b.featured) - Number(a.featured) || String(a.name).localeCompare(String(b.name)),
+  )
+  res.json({ stays, count: stays.length })
+})
+
+app.patch('/api/admin/stays/:id', authRequired, requireRoles('admin'), (req, res) => {
+  const db = loadDb()
+  const stay = db.stays.find((s) => s.id === req.params.id)
+  if (!stay) return res.status(404).json({ error: 'Stay not found' })
+  const body = req.body || {}
+  for (const key of [
+    'name',
+    'city',
+    'country',
+    'neighborhood',
+    'type',
+    'typeLabel',
+    'summary',
+    'status',
+    'nightlyFrom',
+    'ownerId',
+  ]) {
+    if (body[key] !== undefined) stay[key] = body[key]
+  }
+  if (body.featured !== undefined) stay.featured = Boolean(body.featured)
+  if (body.internalNotes !== undefined) stay.internalNotes = String(body.internalNotes)
+  if (body.amenities) stay.amenities = body.amenities
+  if (body.contact) stay.contact = { ...(stay.contact || {}), ...body.contact }
+  stay.updatedAt = new Date().toISOString()
+  audit(db, {
+    actorId: req.auth.sub,
+    action: 'UPDATE',
+    entity: 'Stay',
+    entityId: stay.id,
+    meta: { status: stay.status, featured: stay.featured },
+  })
+  saveDb(db)
+  res.json({ stay })
+})
+
+app.delete('/api/admin/stays/:id', authRequired, requireRoles('admin'), (req, res) => {
+  const db = loadDb()
+  const stay = db.stays.find((s) => s.id === req.params.id)
+  if (!stay) return res.status(404).json({ error: 'Stay not found' })
+  stay.status = 'archived'
+  stay.updatedAt = new Date().toISOString()
+  audit(db, {
+    actorId: req.auth.sub,
+    action: 'ARCHIVE',
+    entity: 'Stay',
+    entityId: stay.id,
+  })
+  saveDb(db)
+  res.json({ stay })
 })
 
 app.get('/api/admin/users', authRequired, requireRoles('admin'), (_req, res) => {
@@ -1192,16 +1380,6 @@ app.patch('/api/admin/settings', authRequired, requireRoles('admin'), (req, res)
   })
   saveDb(db)
   res.json({ settings: db.settings })
-})
-
-app.delete('/api/admin/stays/:id', authRequired, requireRoles('admin'), (req, res) => {
-  const db = loadDb()
-  const stay = db.stays.find((s) => s.id === req.params.id)
-  if (!stay) return res.status(404).json({ error: 'Stay not found' })
-  stay.status = 'archived'
-  stay.updatedAt = new Date().toISOString()
-  saveDb(db)
-  res.json({ stay })
 })
 
 const dist = path.join(ROOT, 'dist')

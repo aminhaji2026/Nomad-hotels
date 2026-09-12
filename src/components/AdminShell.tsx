@@ -15,20 +15,40 @@ const hotelLinks = [
   { to: '/hotel-admin/messages', label: 'Messages' },
 ]
 
-const platformLinks = [
-  { to: '/admin', end: true, label: 'Overview' },
-  { to: '/admin/hotels', label: 'Hotels' },
-  { to: '/admin/users', label: 'Users' },
-  { to: '/admin/bookings', label: 'Bookings' },
-  { to: '/admin/payments', label: 'Payments' },
-  { to: '/admin/duffel', label: 'Duffel Stay' },
-  { to: '/admin/settings', label: 'Settings' },
+const platformGroups = [
+  {
+    label: 'Command',
+    links: [
+      { to: '/admin', end: true, label: 'Executive' },
+      { to: '/admin/modules', label: 'Module map' },
+    ],
+  },
+  {
+    label: 'Network',
+    links: [
+      { to: '/admin/hotels', label: 'Hotels' },
+      { to: '/admin/users', label: 'People' },
+    ],
+  },
+  {
+    label: 'Commerce',
+    links: [
+      { to: '/admin/bookings', label: 'Reservations' },
+      { to: '/admin/payments', label: 'Payments' },
+    ],
+  },
+  {
+    label: 'System',
+    links: [
+      { to: '/admin/duffel', label: 'Duffel Stay' },
+      { to: '/admin/settings', label: 'Settings' },
+    ],
+  },
 ]
 
 export function AdminShell({ variant }: AdminShellProps) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
-  const links = variant === 'hotel' ? hotelLinks : platformLinks
 
   return (
     <div className="app-shell app-shell--bare">
@@ -37,7 +57,7 @@ export function AdminShell({ variant }: AdminShellProps) {
           <div className="ops-top__brand">
             <BrandLockup compact />
             <span className="ops-top__badge">
-              {variant === 'hotel' ? 'Hotel suite' : 'Platform'}
+              {variant === 'hotel' ? 'Hotel suite' : 'Platform control'}
             </span>
           </div>
           <button
@@ -52,13 +72,30 @@ export function AdminShell({ variant }: AdminShellProps) {
           </button>
         </header>
 
-        <nav className="ops-tabs" aria-label={variant === 'hotel' ? 'Hotel admin' : 'Platform admin'}>
-          {links.map((link) => (
-            <NavLink key={link.to} to={link.to} end={'end' in link ? link.end : false}>
-              {link.label}
-            </NavLink>
-          ))}
-        </nav>
+        {variant === 'hotel' ? (
+          <nav className="ops-tabs" aria-label="Hotel admin">
+            {hotelLinks.map((link) => (
+              <NavLink key={link.to} to={link.to} end={'end' in link ? link.end : false}>
+                {link.label}
+              </NavLink>
+            ))}
+          </nav>
+        ) : (
+          <nav className="ops-nav" aria-label="Platform admin">
+            {platformGroups.map((group) => (
+              <div key={group.label} className="ops-nav__group">
+                <p className="ops-nav__label">{group.label}</p>
+                <div className="ops-nav__links">
+                  {group.links.map((link) => (
+                    <NavLink key={link.to} to={link.to} end={'end' in link ? link.end : false}>
+                      {link.label}
+                    </NavLink>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </nav>
+        )}
 
         <div className="ops-main">
           <p className="ops-user muted small">

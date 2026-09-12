@@ -76,6 +76,7 @@ export type ApiStay = {
   featured?: boolean
   ownerId?: string | null
   status?: string
+  internalNotes?: string
 }
 
 export type AuthUser = {
@@ -215,7 +216,8 @@ export const api = {
     request<{ message: unknown }>('/api/hotel/messages', { method: 'POST', body: payload }),
   hotelCalendar: () => request<{ events: unknown[] }>('/api/hotel/calendar'),
 
-  adminDashboard: () => request<Record<string, unknown>>('/api/admin/dashboard'),
+  adminDashboard: (range = '30') =>
+    request<Record<string, unknown>>(`/api/admin/dashboard?range=${encodeURIComponent(range)}`),
   adminUsers: () => request<{ users: AuthUser[] }>('/api/admin/users'),
   createAdminUser: (payload: Record<string, unknown>) =>
     request<{ user: AuthUser }>('/api/admin/users', { method: 'POST', body: payload }),
@@ -230,6 +232,9 @@ export const api = {
       method: 'PATCH',
       body: payload,
     }),
+  adminStays: () => request<{ stays: ApiStay[]; count: number }>('/api/admin/stays'),
+  updateAdminStay: (id: string, payload: Record<string, unknown>) =>
+    request<{ stay: ApiStay }>(`/api/admin/stays/${id}`, { method: 'PATCH', body: payload }),
   archiveStay: (id: string) =>
     request<{ stay: ApiStay }>(`/api/admin/stays/${id}`, { method: 'DELETE' }),
 }

@@ -7,6 +7,7 @@ import {
   AdminDashboardPage,
   AdminDuffelPage,
   AdminHotelsPage,
+  AdminModulesPage,
   AdminPaymentsPage,
   AdminSettingsPage,
   AdminUsersPage,
@@ -64,6 +65,7 @@ export function OpsApp() {
           }
         >
           <Route index element={<AdminDashboardPage />} />
+          <Route path="modules" element={<AdminModulesPage />} />
           <Route path="hotels" element={<AdminHotelsPage />} />
           <Route path="users" element={<AdminUsersPage />} />
           <Route path="bookings" element={<AdminBookingsPage />} />
