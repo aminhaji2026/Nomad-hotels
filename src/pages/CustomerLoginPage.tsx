@@ -45,12 +45,12 @@ export function CustomerLoginPage() {
       </section>
 
       <main className="page-pad auth-page lux-stagger">
-        <p className="eyebrow lux-stagger__item">Guest access</p>
-        <h1 className="serif-title lux-stagger__item">{mode === 'login' ? 'A quiet return' : 'Begin membership'}</h1>
+        <p className="eyebrow lux-stagger__item">Member arrival</p>
+        <h1 className="serif-title lux-stagger__item">{mode === 'login' ? 'Welcome back to the maison' : 'Request membership'}</h1>
         <p className="muted lux-stagger__item">
           {mode === 'login'
-            ? 'Sign in for trips, saved stays, and loyalty points.'
-            : 'Create a membership and earn welcome points instantly.'}
+            ? 'Enter for reservations, saved sanctuaries, and maison privileges.'
+            : 'Join the collection and receive welcome privileges instantly.'}
         </p>
 
         <div className="segmented segmented--tabs" role="tablist" aria-label="Account mode">

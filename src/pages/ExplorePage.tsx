@@ -23,7 +23,7 @@ export function ExplorePage() {
   const { user, ensureSession } = useUser()
   const { stays, loading } = useStays()
   const [category, setCategory] = useState<(typeof categories)[number]['id']>('hotels')
-  const [query, setQuery] = useState('Hargeisa')
+  const [query, setQuery] = useState('Dubai')
   const [dates, setDates] = useState('2025-05-24|2025-05-28')
   const [guests, setGuests] = useState('2 Guests, 1 Room')
   const railRef = useRef<HTMLDivElement>(null)
@@ -45,13 +45,10 @@ export function ExplorePage() {
     return () => window.removeEventListener('resize', update)
   }, [activeIndex, category])
 
-
   const featured = useMemo(
     () =>
       stays.filter((s) =>
-        ['damal-hotel-hargeisa', 'holiday-hotel-mogadishu', 'address-downtown', 'maldives-villa'].includes(
-          s.id,
-        ),
+        ['jazeer-hargeisa', 'address-downtown', 'four-seasons-dubai', 'maldives-villa'].includes(s.id),
       ),
     [stays],
   )
@@ -60,12 +57,16 @@ export function ExplorePage() {
     () => stays.filter((s) => s.nightlyFrom >= 400 || s.type === 'holiday_home').slice(0, 4),
     [stays],
   )
+  const hornPicks = useMemo(
+    () => featured.filter((s) => ['jazeer-hargeisa', 'address-downtown'].includes(s.id)),
+    [featured],
+  )
 
   function onSearch(event: FormEvent) {
     event.preventDefault()
     const [checkIn, checkOut] = dates.split('|')
     const params = new URLSearchParams({
-      city: query || 'Hargeisa',
+      city: query || 'Dubai',
       checkIn: checkIn || '2025-05-24',
       checkOut: checkOut || '2025-05-28',
       guests,
@@ -75,7 +76,7 @@ export function ExplorePage() {
   }
 
   function scrollToSearch() {
-    document.getElementById('atelier-search')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    document.getElementById('maison-reserve')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
   return (
@@ -119,7 +120,7 @@ export function ExplorePage() {
         </div>
       }
     >
-      <section className="atelier-hero" aria-label="NomadStay introduction">
+      <section className="atelier-hero maison-hero" aria-label="NomadStay introduction">
         <img
           className="atelier-hero__media"
           src="https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=1600&q=80"
@@ -131,24 +132,41 @@ export function ExplorePage() {
           <div className="lux-stagger__item">
             <BrandLockup onDark />
           </div>
-          <h1 className="lux-stagger__item">Stay where the world softens.</h1>
-          <p className="lux-stagger__item">An atelier of handpicked sanctuaries across the Horn of Africa and beyond.</p>
+          <p className="maison-kicker lux-stagger__item">The leading collection of quiet luxury</p>
+          <h1 className="lux-stagger__item">
+            Stay where the world <em>softens</em>.
+          </h1>
+          <p className="lux-stagger__item">
+            Independently minded sanctuaries across the Horn of Africa, the Gulf, and beyond — curated like a
+            private maison.
+          </p>
           <div className="atelier-hero__cta lux-stagger__item">
             <button type="button" className="btn btn--gold lux-shimmer" onClick={scrollToSearch}>
-              Explore stays
+              Reserve a stay
             </button>
             <Link to={user ? '/profile' : '/login'} className="btn btn--ghost">
-              {user ? 'Your membership' : 'Member entry'}
+              {user ? 'Your membership' : 'Become a member'}
             </Link>
           </div>
         </div>
+        <button type="button" className="maison-scroll" onClick={scrollToSearch} aria-label="Scroll to reservations">
+          <span />
+        </button>
       </section>
 
-      <div className="explore-panel" id="atelier-search">
-        <header className="top-bar top-bar--panel">
+      <div className="maison-ribbon" role="note">
+        <span>Maison Concierge</span>
+        <span aria-hidden="true">·</span>
+        <span>Arrivals arranged with quiet precision</span>
+      </div>
+
+      <div className="explore-panel" id="maison-reserve">
+        <header className="section-head section-head--maison">
           <div>
-            <p className="eyebrow">Curated for you</p>
-            <h2 className="serif-title">Find your next sanctuary</h2>
+            <p className="eyebrow">Reservations desk</p>
+            <h2 className="serif-title">
+              Find your next <em>sanctuary</em>
+            </h2>
           </div>
           {user ? (
             <Link to="/profile" className="points-chip" title="Loyalty points">
@@ -156,24 +174,26 @@ export function ExplorePage() {
             </Link>
           ) : (
             <button type="button" className="points-chip" onClick={() => void ensureSession()}>
-              Join loyalty
+              Join the maison
             </button>
           )}
         </header>
 
-        <form className="search-card" onSubmit={onSearch}>
+        <form className="search-card maison-desk" onSubmit={onSearch}>
           <label className="search-field">
-            <span className="sr-only">Destination</span>
-            <span aria-hidden="true">⌕</span>
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Where do you want to go?"
-            />
+            <span className="mini-label">Destination</span>
+            <span className="search-field__row">
+              <span aria-hidden="true">⌕</span>
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Where would you like to arrive?"
+              />
+            </span>
           </label>
           <div className="search-grid">
             <label className="mini-field">
-              <span>Dates</span>
+              <span>Check in — out</span>
               <select value={dates} onChange={(e) => setDates(e.target.value)}>
                 <option value="2025-05-24|2025-05-28">May 24 – May 28</option>
                 <option value="2025-06-01|2025-06-07">Jun 1 – Jun 7</option>
@@ -181,7 +201,7 @@ export function ExplorePage() {
               </select>
             </label>
             <label className="mini-field">
-              <span>Guests & Rooms</span>
+              <span>Guests & Suites</span>
               <select value={guests} onChange={(e) => setGuests(e.target.value)}>
                 <option>2 Guests, 1 Room</option>
                 <option>1 Guest, 1 Room</option>
@@ -189,21 +209,25 @@ export function ExplorePage() {
               </select>
             </label>
           </div>
-          <button type="submit" className="btn btn--gold btn--block lux-shimmer">
+          <button type="submit" className="btn btn--amber btn--block lux-shimmer">
             Search stays
           </button>
         </form>
 
-        <Reveal className="rail-section-wrap"><section className="rail-section">
-          <div className="section-head">
-            <h2>Horn of Africa picks</h2>
-          </div>
-          <div className="stack">
-            {loading
-              ? Array.from({ length: 2 }).map((_, i) => <StayCardSkeleton key={i} />)
-              : featured
-                  .filter((s) => ['damal-hotel-hargeisa', 'holiday-hotel-mogadishu'].includes(s.id))
-                  .map((stay) => (
+        <Reveal className="rail-section-wrap">
+          <section className="rail-section">
+            <div className="section-head section-head--maison">
+              <div>
+                <p className="eyebrow">Signature collection</p>
+                <h2>
+                  Horn of Africa <em>picks</em>
+                </h2>
+              </div>
+            </div>
+            <div className="stack">
+              {loading
+                ? Array.from({ length: 2 }).map((_, i) => <StayCardSkeleton key={i} />)
+                : (hornPicks.length ? hornPicks : featured.slice(0, 2)).map((stay) => (
                     <StayCard
                       key={stay.id}
                       stay={stay}
@@ -211,84 +235,113 @@ export function ExplorePage() {
                       onToggleSave={toggleSaved}
                     />
                   ))}
-          </div>
-        </section></Reveal>
+            </div>
+          </section>
+        </Reveal>
 
-        <Reveal className="rail-section-wrap"><section className="rail-section">
-          <div className="section-head">
-            <h2>Destinations</h2>
-          </div>
-          <div className="h-scroll">
-            {destinations.map((dest) => (
-              <Link
-                key={dest.id}
-                to={`/results?city=${encodeURIComponent(dest.name)}`}
-                className="dest-card"
-              >
-                <img src={dest.image} alt="" loading="lazy" />
-                <div>
-                  <strong>{dest.name}</strong>
-                  <span>{dest.country}</span>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section></Reveal>
+        <Reveal className="rail-section-wrap">
+          <section className="rail-section">
+            <div className="section-head section-head--maison">
+              <div>
+                <p className="eyebrow">Characterful destinations</p>
+                <h2>
+                  Step into our <em>world</em>
+                </h2>
+              </div>
+            </div>
+            <div className="h-scroll">
+              {destinations.map((dest) => (
+                <Link
+                  key={dest.id}
+                  to={`/results?city=${encodeURIComponent(dest.name)}`}
+                  className="dest-card maison-dest"
+                >
+                  <img src={dest.image} alt="" loading="lazy" />
+                  <div>
+                    <strong>{dest.name}</strong>
+                    <span>{dest.country}</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        </Reveal>
 
-        <Reveal className="rail-section-wrap"><section className="rail-section">
-          <div className="section-head">
-            <h2>Private escapes</h2>
-            <Link to="/results?sort=luxury">See all</Link>
-          </div>
-          <div className="h-scroll h-scroll--wide">
-            {luxury.map((stay) => (
-              <Link key={stay.id} to={`/stay/${stay.id}`} className="escape-card">
-                <img src={stay.image} alt={stay.name} loading="lazy" />
-                {stay.badge && <span className="badge">{stay.badge}</span>}
-                <div>
-                  <strong>{stay.name}</strong>
-                  <span>From ${stay.nightlyFrom} / night</span>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section></Reveal>
+        <Reveal className="rail-section-wrap">
+          <section className="rail-section">
+            <div className="section-head section-head--maison">
+              <div>
+                <p className="eyebrow">Private escapes</p>
+                <h2>
+                  Independently <em>minded</em>
+                </h2>
+              </div>
+              <Link to="/results?sort=luxury">Explore all</Link>
+            </div>
+            <div className="h-scroll h-scroll--wide">
+              {luxury.map((stay) => (
+                <Link key={stay.id} to={`/stay/${stay.id}`} className="escape-card maison-escape">
+                  <img src={stay.image} alt={stay.name} loading="lazy" />
+                  {stay.badge && <span className="badge">{stay.badge}</span>}
+                  <div>
+                    <strong>{stay.name}</strong>
+                    <span>From ${stay.nightlyFrom} / night</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        </Reveal>
 
-        <Reveal className="rail-section-wrap"><section className="rail-section">
-          <div className="section-head">
-            <h2>Most loved stays</h2>
-            <Link to="/results">See all</Link>
-          </div>
-          <div className="stack">
-            {topRated.map((stay) => (
-              <StayCard
-                key={stay.id}
-                stay={stay}
-                saved={isSaved(stay.id)}
-                onToggleSave={toggleSaved}
-              />
-            ))}
-          </div>
-        </section></Reveal>
+        <Reveal className="rail-section-wrap">
+          <section className="rail-section">
+            <div className="section-head section-head--maison">
+              <div>
+                <p className="eyebrow">Most loved</p>
+                <h2>
+                  Guests return <em>here</em>
+                </h2>
+              </div>
+              <Link to="/results">See all</Link>
+            </div>
+            <div className="stack">
+              {topRated.map((stay) => (
+                <StayCard
+                  key={stay.id}
+                  stay={stay}
+                  saved={isSaved(stay.id)}
+                  onToggleSave={toggleSaved}
+                />
+              ))}
+            </div>
+          </section>
+        </Reveal>
 
-        <Reveal className="rail-section-wrap"><section className="rail-section">
-          <div className="section-head">
-            <h2>Chauffeured travel</h2>
-            <Link to="/results?category=vehicles">See all</Link>
-          </div>
-          <div className="h-scroll">
-            {vehicles.map((vehicle) => (
-              <article key={vehicle.id} className="vehicle-card">
-                <img src={vehicle.image} alt={vehicle.name} loading="lazy" />
-                <div>
-                  <strong>{vehicle.name}</strong>
-                  <span>{vehicle.detail}</span>
-                  <p className="price-gold">From ${vehicle.dailyFrom} / day</p>
-                </div>
-              </article>
-            ))}
-          </div>
-        </section></Reveal>
+        <Reveal className="rail-section-wrap">
+          <section className="rail-section">
+            <div className="section-head section-head--maison">
+              <div>
+                <p className="eyebrow">Arrivals & journeys</p>
+                <h2>
+                  Chauffeured <em>travel</em>
+                </h2>
+              </div>
+              <Link to="/results?category=vehicles">See all</Link>
+            </div>
+            <div className="h-scroll">
+              {vehicles.map((vehicle) => (
+                <article key={vehicle.id} className="vehicle-card maison-vehicle">
+                  <img src={vehicle.image} alt={vehicle.name} loading="lazy" />
+                  <div>
+                    <strong>{vehicle.name}</strong>
+                    <span>{vehicle.detail}</span>
+                    <p className="price-gold">From ${vehicle.dailyFrom} / day</p>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+        </Reveal>
       </div>
     </AppShell>
   )

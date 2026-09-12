@@ -12,12 +12,13 @@ export function StayCard({ stay, nights = 4, saved = false, onToggleSave }: Stay
   const total = stay.nightlyFrom * nights
 
   return (
-    <article className="stay-card lux-card">
+    <article className="stay-card lux-card maison-stay">
       <div className="stay-card__media">
         <Link to={`/stay/${stay.id}`}>
           <img src={stay.image} alt={stay.name} loading="lazy" />
         </Link>
-        {stay.badge && <span className="badge">{stay.badge}</span>}
+        <div className="maison-stay__veil" aria-hidden="true" />
+        {stay.badge && <span className="badge maison-badge">{stay.badge}</span>}
         {onToggleSave && (
           <button
             type="button"
@@ -39,7 +40,7 @@ export function StayCard({ stay, nights = 4, saved = false, onToggleSave }: Stay
         <h3>
           <Link to={`/stay/${stay.id}`}>{stay.name}</Link>
         </h3>
-        <p className="muted">
+        <p className="muted maison-stay__meta">
           {stay.typeLabel} · {stay.neighborhood}
         </p>
         <div className="tag-row">
@@ -52,9 +53,12 @@ export function StayCard({ stay, nights = 4, saved = false, onToggleSave }: Stay
         <div className="stay-card__price">
           <div>
             <span className="muted">From</span>
-            <p className="price-gold">${stay.nightlyFrom} / night</p>
-            <p className="muted small">Total ${total.toLocaleString()}</p>
+            <p className="price-gold">${stay.nightlyFrom}</p>
+            <p className="muted small">per night · ${total.toLocaleString()} total</p>
           </div>
+          <Link to={`/stay/${stay.id}`} className="maison-stay__link">
+            View suite
+          </Link>
         </div>
       </div>
     </article>
