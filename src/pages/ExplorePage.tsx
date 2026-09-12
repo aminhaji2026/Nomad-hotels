@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent } from 'react'
+import { useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { destinations, vehicles } from '../data/catalog'
 import { useSaved } from '../context/SavedContext'
@@ -8,12 +8,13 @@ import { AppShell, BrandLockup } from '../components/AppShell'
 import { StayCard } from '../components/StayCard'
 import { StayCardSkeleton } from '../components/Skeleton'
 import { Reveal } from '../components/Reveal'
+import { categoryIcons } from '../components/LuxIcons'
 
 const categories = [
-  { id: 'hotels', label: 'Hotels' },
-  { id: 'guest_houses', label: 'Guest Houses' },
-  { id: 'holiday_homes', label: 'Holiday Homes' },
-  { id: 'vehicles', label: 'Vehicles' },
+  { id: 'hotels', label: 'Hotels', short: 'Hotels' },
+  { id: 'guest_houses', label: 'Guest Houses', short: 'Guests' },
+  { id: 'holiday_homes', label: 'Holiday Homes', short: 'Homes' },
+  { id: 'vehicles', label: 'Vehicles', short: 'Cars' },
 ] as const
 
 export function ExplorePage() {
@@ -25,6 +26,20 @@ export function ExplorePage() {
   const [query, setQuery] = useState('Hargeisa')
   const [dates, setDates] = useState('2025-05-24|2025-05-28')
   const [guests, setGuests] = useState('2 Guests, 1 Room')
+  const railRef = useRef<HTMLDivElement>(null)
+  const itemRefs = useRef<(HTMLButtonElement | null)[]>([])
+  const [indicator, setIndicator] = useState({ left: 0, width: 0 })
+  const activeIndex = categories.findIndex((c) => c.id === category)
+
+  useLayoutEffect(() => {
+    const btn = itemRefs.current[activeIndex]
+    const rail = railRef.current
+    if (!btn || !rail) return
+    const railBox = rail.getBoundingClientRect()
+    const btnBox = btn.getBoundingClientRect()
+    setIndicator({ left: btnBox.left - railBox.left + rail.scrollLeft, width: btnBox.width })
+  }, [activeIndex, category])
+
 
   const featured = useMemo(
     () =>
@@ -86,6 +101,36 @@ export function ExplorePage() {
       </section>
 
       <div className="explore-panel" id="atelier-search">
+        <div className="lux-select-rail" ref={railRef} role="tablist" aria-label="Stay categories">
+          <span
+            className="lux-select-rail__indicator"
+            style={{ transform: `translateX(${indicator.left}px)`, width: indicator.width } as CSSProperties}
+            aria-hidden="true"
+          />
+          {categories.map((item, index) => {
+            const Icon = categoryIcons[item.id]
+            const active = category === item.id
+            return (
+              <button
+                key={item.id}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                className={`lux-select${active ? ' is-active' : ''}`}
+                ref={(el) => {
+                  itemRefs.current[index] = el
+                }}
+                onClick={() => setCategory(item.id)}
+              >
+                <span className="lux-select__icon lux-icon">
+                  <Icon />
+                </span>
+                <span className="lux-select__label">{item.short}</span>
+              </button>
+            )
+          })}
+        </div>
+
         <header className="top-bar top-bar--panel">
           <div>
             <p className="eyebrow">Curated for you</p>
@@ -101,21 +146,6 @@ export function ExplorePage() {
             </button>
           )}
         </header>
-
-        <div className="chip-row" role="tablist" aria-label="Categories">
-          {categories.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              role="tab"
-              aria-selected={category === item.id}
-              className={`chip ${category === item.id ? 'is-active' : ''}`}
-              onClick={() => setCategory(item.id)}
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
 
         <form className="search-card" onSubmit={onSearch}>
           <label className="search-field">

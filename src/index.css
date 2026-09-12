@@ -2334,3 +2334,158 @@ input:focus, select:focus, textarea:focus {
     filter: none !important;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   Lux select rail (top-line animated selectors) + icon motion
+   ═══════════════════════════════════════════════════════════ */
+
+.lux-select-rail {
+  position: sticky;
+  top: 0;
+  z-index: 25;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.25rem;
+  padding: 0.35rem;
+  margin: 0 0 1rem;
+  border-radius: 1.15rem;
+  background:
+    linear-gradient(180deg, rgba(255, 252, 248, 0.94), rgba(241, 244, 240, 0.9));
+  border: 1px solid rgba(21, 32, 28, 0.08);
+  box-shadow: 0 12px 36px rgba(21, 32, 28, 0.07);
+  backdrop-filter: blur(16px) saturate(1.15);
+  overflow: hidden;
+  animation: lux-fade-up 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.lux-select-rail__indicator {
+  position: absolute;
+  top: 0.35rem;
+  bottom: 0.35rem;
+  left: 0;
+  border-radius: 0.9rem;
+  background: linear-gradient(145deg, var(--jade-soft, #2f6b64), var(--jade, #1f4d47));
+  box-shadow: 0 10px 24px rgba(31, 77, 71, 0.28);
+  transition: transform 420ms cubic-bezier(0.22, 1, 0.36, 1), width 420ms cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+}
+
+.lux-select {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  justify-items: center;
+  gap: 0.22rem;
+  padding: 0.55rem 0.25rem 0.5rem;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  border-radius: 0.9rem;
+  transition: color 220ms ease, transform 220ms ease;
+}
+
+.lux-select__label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.lux-select__icon {
+  width: 1.35rem;
+  height: 1.35rem;
+  display: grid;
+  place-items: center;
+}
+
+.lux-select__icon svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.lux-select:hover {
+  color: var(--ink);
+  transform: translateY(-1px);
+}
+
+.lux-select.is-active {
+  color: #fff8ef;
+}
+
+.lux-select.is-active .lux-select__icon {
+  animation: lux-icon-pop 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.lux-select.is-active .lux-select__icon svg path,
+.lux-select.is-active .lux-select__icon svg circle,
+.lux-select.is-active .lux-select__icon svg rect {
+  animation: lux-icon-draw 650ms ease both;
+}
+
+/* Shared icon system */
+.lux-icon svg {
+  width: 1.35rem;
+  height: 1.35rem;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 280ms cubic-bezier(0.22, 1, 0.36, 1), filter 280ms ease;
+}
+
+.bottom-nav__item:hover .lux-icon svg {
+  transform: translateY(-2px) scale(1.06);
+}
+
+.bottom-nav__item.is-active .lux-icon svg,
+.bottom-nav__item.active .lux-icon svg {
+  animation: lux-icon-pop 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  filter: drop-shadow(0 6px 10px rgba(31, 77, 71, 0.25));
+}
+
+.bottom-nav__item.is-active .lux-icon svg path,
+.bottom-nav__item.is-active .lux-icon svg circle,
+.bottom-nav__item.is-active .lux-icon svg rect,
+.bottom-nav__item.active .lux-icon svg path,
+.bottom-nav__item.active .lux-icon svg circle,
+.bottom-nav__item.active .lux-icon svg rect {
+  animation: lux-icon-draw 700ms ease both;
+}
+
+.bottom-nav__icon {
+  width: 1.7rem;
+  height: 1.7rem;
+  border-radius: 0.7rem;
+  display: grid;
+  place-items: center;
+  transition: background 220ms ease, transform 220ms ease;
+}
+
+.bottom-nav__item.is-active .bottom-nav__icon,
+.bottom-nav__item.active .bottom-nav__icon {
+  background: rgba(31, 77, 71, 0.1);
+}
+
+@keyframes lux-icon-pop {
+  0% { transform: scale(0.82) translateY(2px); opacity: 0.55; }
+  60% { transform: scale(1.12) translateY(-1px); opacity: 1; }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+@keyframes lux-icon-draw {
+  0% { stroke-dasharray: 60; stroke-dashoffset: 60; opacity: 0.35; }
+  70% { stroke-dashoffset: 0; opacity: 1; }
+  100% { stroke-dasharray: 60; stroke-dashoffset: 0; opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lux-select-rail,
+  .lux-select-rail__indicator,
+  .lux-select.is-active .lux-select__icon,
+  .bottom-nav__item.is-active .lux-icon svg,
+  .bottom-nav__item.active .lux-icon svg,
+  .lux-select.is-active .lux-select__icon svg path,
+  .bottom-nav__item.is-active .lux-icon svg path {
+    animation: none !important;
+    transition: none !important;
+  }
+}
