@@ -195,7 +195,6 @@ const upload = multer({
 
 const app = express()
 app.use(cors())
-app.use(express.json({ limit: '2mb' }))
 
 /** When set (ops service), proxy API/uploads to the customer API instead of using a local DB. */
 const API_UPSTREAM = String(process.env.API_UPSTREAM || '').replace(/\/$/, '')
@@ -204,6 +203,14 @@ function proxyUpstream(req, res) {
   const target = new URL(req.originalUrl || req.url, API_UPSTREAM)
   const lib = target.protocol === 'https:' ? https : http
   const headers = { ...req.headers, host: target.host }
+  // Drop hop-by-hop / length headers — Node will set length for the forwarded body.
+  delete headers['content-length']
+  delete headers['Content-Length']
+  delete headers['connection']
+  delete headers['Connection']
+  delete headers['transfer-encoding']
+  delete headers['Transfer-Encoding']
+
   const proxyReq = lib.request(
     target,
     { method: req.method, headers },
@@ -216,13 +223,31 @@ function proxyUpstream(req, res) {
     console.error('API upstream proxy failed', err)
     if (!res.headersSent) res.status(502).json({ error: 'Upstream API unavailable' })
   })
+
+  // Prefer raw stream (proxy is mounted before express.json). If JSON was already
+  // parsed somehow, re-serialize so POST/PUT bodies are not dropped.
+  if (req.readableEnded || req.complete) {
+    const payload =
+      req.body === undefined || req.body === null
+        ? Buffer.alloc(0)
+        : Buffer.from(typeof req.body === 'string' ? req.body : JSON.stringify(req.body))
+    if (payload.length) {
+      proxyReq.setHeader('content-type', headers['content-type'] || 'application/json')
+      proxyReq.setHeader('content-length', String(payload.length))
+    }
+    proxyReq.end(payload)
+    return
+  }
+
   req.pipe(proxyReq)
 }
 
 if (API_UPSTREAM) {
+  // Must run before express.json() so request bodies remain streamable.
   app.use('/api', proxyUpstream)
   app.use('/uploads', proxyUpstream)
 } else {
+  app.use(express.json({ limit: '2mb' }))
   app.use('/uploads', express.static(UPLOAD_DIR))
 }
 
