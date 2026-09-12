@@ -11,6 +11,12 @@ import { Reveal } from '../components/Reveal'
 import { HeroMediaReel } from '../components/HeroMediaReel'
 import { categoryIcons } from '../components/LuxIcons'
 import { useDragScroll } from '../hooks/useDragScroll'
+import { StayCriteriaFields } from '../components/StayCriteriaFields'
+import {
+  defaultStayDates,
+  stayCriteriaSearchParams,
+  type StayOccupancy,
+} from '../lib/stayCriteria'
 
 function scrollFrameToId(id: string) {
   const target = document.getElementById(id)
@@ -36,9 +42,11 @@ export function ExplorePage() {
   const { user, ensureSession } = useUser()
   const { stays, loading } = useStays()
   const [category, setCategory] = useState<(typeof categories)[number]['id']>('hotels')
+  const initialDates = defaultStayDates()
   const [query, setQuery] = useState('Dubai')
-  const [dates, setDates] = useState('2025-05-24|2025-05-28')
-  const [guests, setGuests] = useState('2 Guests, 1 Room')
+  const [checkIn, setCheckIn] = useState(initialDates.checkIn)
+  const [checkOut, setCheckOut] = useState(initialDates.checkOut)
+  const [occupancy, setOccupancy] = useState<StayOccupancy>({ adults: 2, children: 0, rooms: 1 })
   const railRef = useRef<HTMLDivElement>(null)
   const itemRefs = useRef<(HTMLButtonElement | null)[]>([])
   const [indicator, setIndicator] = useState({ left: 0, width: 0 })
@@ -77,19 +85,31 @@ export function ExplorePage() {
     [featured],
   )
 
+  const exploreQuery = stayCriteriaSearchParams({
+    city: query || 'Dubai',
+    checkIn,
+    checkOut,
+    occupancy,
+  }).toString()
+
   function onSearch(event: FormEvent) {
     event.preventDefault()
-    const [checkIn, checkOut] = dates.split('|')
-    const params = new URLSearchParams({
+    const type =
+      category === 'hotels'
+        ? 'hotel'
+        : category === 'holiday_homes'
+          ? 'holiday_home'
+          : category === 'guest_houses'
+            ? 'guest_house'
+            : undefined
+    const params = stayCriteriaSearchParams({
       city: query || 'Dubai',
-      checkIn: checkIn || '2025-05-24',
-      checkOut: checkOut || '2025-05-28',
-      guests,
+      checkIn,
+      checkOut,
+      occupancy,
       category,
+      type,
     })
-    if (category === 'hotels') params.set('type', 'hotel')
-    if (category === 'holiday_homes') params.set('type', 'holiday_home')
-    if (category === 'guest_houses') params.set('type', 'guest_house')
     navigate(`/results?${params.toString()}`)
   }
 
@@ -213,24 +233,14 @@ export function ExplorePage() {
               />
             </span>
           </label>
-          <div className="search-grid">
-            <label className="mini-field">
-              <span>Check in — out</span>
-              <select value={dates} onChange={(e) => setDates(e.target.value)}>
-                <option value="2025-05-24|2025-05-28">May 24 – May 28</option>
-                <option value="2025-06-01|2025-06-07">Jun 1 – Jun 7</option>
-                <option value="2025-07-10|2025-07-17">Jul 10 – Jul 17</option>
-              </select>
-            </label>
-            <label className="mini-field">
-              <span>Guests & Suites</span>
-              <select value={guests} onChange={(e) => setGuests(e.target.value)}>
-                <option>2 Guests, 1 Room</option>
-                <option>1 Guest, 1 Room</option>
-                <option>4 Guests, 2 Rooms</option>
-              </select>
-            </label>
-          </div>
+          <StayCriteriaFields
+            checkIn={checkIn}
+            checkOut={checkOut}
+            occupancy={occupancy}
+            onCheckInChange={setCheckIn}
+            onCheckOutChange={setCheckOut}
+            onOccupancyChange={setOccupancy}
+          />
           <button type="submit" className="btn btn--amber btn--block lux-shimmer">
             Search stays
           </button>
@@ -255,6 +265,7 @@ export function ExplorePage() {
                       stay={stay}
                       saved={isSaved(stay.id)}
                       onToggleSave={toggleSaved}
+                      query={exploreQuery}
                     />
                   ))}
             </div>
@@ -275,7 +286,12 @@ export function ExplorePage() {
               {destinations.map((dest) => (
                 <Link
                   key={dest.id}
-                  to={`/results?city=${encodeURIComponent(dest.name)}`}
+                  to={`/results?${stayCriteriaSearchParams({
+                    city: dest.name,
+                    checkIn,
+                    checkOut,
+                    occupancy,
+                  }).toString()}`}
                   className="dest-card maison-dest"
                 >
                   <img src={dest.image} alt="" loading="lazy" />
@@ -302,7 +318,11 @@ export function ExplorePage() {
             </div>
             <div className="h-scroll h-scroll--wide">
               {luxury.map((stay) => (
-                <Link key={stay.id} to={`/stay/${stay.id}`} className="escape-card maison-escape">
+                <Link
+                  key={stay.id}
+                  to={`/stay/${stay.id}?${exploreQuery}`}
+                  className="escape-card maison-escape"
+                >
                   <img src={stay.image} alt={stay.name} loading="lazy" />
                   {stay.badge && <span className="badge">{stay.badge}</span>}
                   <div>
@@ -333,6 +353,7 @@ export function ExplorePage() {
                   stay={stay}
                   saved={isSaved(stay.id)}
                   onToggleSave={toggleSaved}
+                  query={exploreQuery}
                 />
               ))}
             </div>

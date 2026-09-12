@@ -1,9 +1,17 @@
 import { useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { addonsForCity, nightsBetween } from '../data/catalog'
+import {
+  defaultStayDates,
+  formatOccupancyLabel,
+  parseOccupancyParams,
+  stayCriteriaSearchParams,
+  type StayOccupancy,
+} from '../lib/stayCriteria'
 import { useSaved } from '../context/SavedContext'
 import { useStay } from '../hooks/useStays'
 import { AppShell } from '../components/AppShell'
+import { StayCriteriaFields } from '../components/StayCriteriaFields'
 
 export function StayDetailPage() {
   const { id } = useParams()
@@ -14,9 +22,17 @@ export function StayDetailPage() {
   const touchStartX = useRef<number | null>(null)
   const { stay, raw, loading, error } = useStay(id)
 
-  const checkIn = params.get('checkIn') || '2025-05-24'
-  const checkOut = params.get('checkOut') || '2025-05-28'
+  const defaults = defaultStayDates()
+  const [checkIn, setCheckIn] = useState(params.get('checkIn') || defaults.checkIn)
+  const [checkOut, setCheckOut] = useState(params.get('checkOut') || defaults.checkOut)
+  const [occupancy, setOccupancy] = useState<StayOccupancy>(() => parseOccupancyParams(params))
   const nights = nightsBetween(checkIn, checkOut)
+  const bookQuery = stayCriteriaSearchParams({
+    checkIn,
+    checkOut,
+    occupancy,
+  })
+  bookQuery.set('nights', String(nights))
   const cityAddons = useMemo(() => (stay ? addonsForCity(stay.city) : []), [stay])
 
   if (loading) {
@@ -248,6 +264,19 @@ export function StayDetailPage() {
             </div>
           </section>
 
+          <section className="stay-plan">
+            <h2>Your stay plan</h2>
+            <p className="muted">Choose preferred dates, rooms, and who is travelling.</p>
+            <StayCriteriaFields
+              checkIn={checkIn}
+              checkOut={checkOut}
+              occupancy={occupancy}
+              onCheckInChange={setCheckIn}
+              onCheckOutChange={setCheckOut}
+              onOccupancyChange={setOccupancy}
+            />
+          </section>
+
           <p className="muted small">
             Earn loyalty points when you request this stay ·{' '}
             <Link className="gold-link" to={`/host?stay=${stay.id}`}>
@@ -259,12 +288,11 @@ export function StayDetailPage() {
         <div className="booking-bar">
           <div>
             <p className="price-gold">From ${stay.nightlyFrom} / night</p>
-            <p className="muted small">Inclusive of taxes · {nights} nights</p>
+            <p className="muted small">
+              Inclusive of taxes · {nights} nights · {formatOccupancyLabel(occupancy)}
+            </p>
           </div>
-          <Link
-            className="btn btn--gold"
-            to={`/book/${stay.id}?checkIn=${checkIn}&checkOut=${checkOut}&nights=${nights}`}
-          >
+          <Link className="btn btn--gold" to={`/book/${stay.id}?${bookQuery.toString()}`}>
             Check Availability
           </Link>
         </div>

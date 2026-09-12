@@ -4,6 +4,7 @@ import { api, type PaymentMethod } from '../api'
 import { useUser } from '../context/UserContext'
 import { useStay } from '../hooks/useStays'
 import { AppShell } from '../components/AppShell'
+import { defaultStayDates, formatOccupancyLabel, parseOccupancyParams } from '../lib/stayCriteria'
 
 type Step = 'form' | 'checking' | 'confirmed'
 
@@ -13,9 +14,11 @@ export function BookingPage() {
   const navigate = useNavigate()
   const { stay, loading } = useStay(id)
   const { ensureSession, setIdentity, refresh } = useUser()
+  const defaults = defaultStayDates()
+  const checkIn = params.get('checkIn') || defaults.checkIn
+  const checkOut = params.get('checkOut') || defaults.checkOut
+  const occupancy = parseOccupancyParams(params)
   const nights = Number(params.get('nights') || 4)
-  const checkIn = params.get('checkIn') || '2026-05-24'
-  const checkOut = params.get('checkOut') || '2026-05-28'
 
   const [step, setStep] = useState<Step>('form')
   const [name, setName] = useState(localStorage.getItem('nomadstay-name') || 'Amin Hussein')
@@ -75,6 +78,10 @@ export function BookingPage() {
         nights,
         total,
         gateway,
+        guests: occupancy.adults + occupancy.children,
+        adults: occupancy.adults,
+        children: occupancy.children,
+        rooms: occupancy.rooms,
       })
       setRef(data.booking.bookingRef)
       setPointsEarned(data.pointsEarned)
@@ -107,7 +114,7 @@ export function BookingPage() {
             <img className="booking-form__image" src={stay.image} alt="" />
             <h1 className="serif-title">{stay.name}</h1>
             <p className="muted">
-              {checkIn} → {checkOut} · {nights} nights
+              {checkIn} → {checkOut} · {nights} nights · {formatOccupancyLabel(occupancy)}
             </p>
             <p className="price-gold">${total.toLocaleString()} estimated total</p>
             <p className="muted small">

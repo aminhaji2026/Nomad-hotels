@@ -569,6 +569,9 @@ app.post('/api/bookings', async (req, res) => {
       gateway = 'mock',
       phone,
       guests,
+      adults,
+      children,
+      rooms,
     } = req.body || {}
     if (!stayId) return res.status(400).json({ error: 'stayId is required' })
     const db = loadDb()
@@ -584,6 +587,10 @@ app.post('/api/bookings', async (req, res) => {
     const amount = Number(total || stay.nightlyFrom * nightCount)
     const pointsEarned = Math.max(50, Math.round(amount * LOYALTY.pointsPerDollar))
     const bookingRef = `NS${stay.city.slice(0, 3).toUpperCase()}${Date.now().toString().slice(-6)}`
+    const adultCount = Math.max(1, Number(adults || guests || 2))
+    const childCount = Math.max(0, Number(children || 0))
+    const roomCount = Math.max(1, Number(rooms || 1))
+    const guestCount = Number(guests || adultCount + childCount)
 
     const booking = {
       id: uid('bk_'),
@@ -592,7 +599,10 @@ app.post('/api/bookings', async (req, res) => {
       guestName: name || user.name,
       guestEmail: email || user.email,
       guestPhone: phone || user.phone || '',
-      guests: Number(guests || 2),
+      guests: guestCount,
+      adults: adultCount,
+      children: childCount,
+      rooms: roomCount,
       stayId: stay.id,
       stayName: stay.name,
       city: stay.city,
