@@ -4,7 +4,7 @@ Premium travel booking with a React guest app and Express API — dual logins, h
 
 ## Live
 
-https://workspace-production-3ef2.up.railway.app
+https://nomadstay-production.up.railway.app
 
 ## Run locally
 
