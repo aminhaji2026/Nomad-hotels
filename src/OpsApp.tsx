@@ -12,6 +12,31 @@ import {
   AdminSettingsPage,
   AdminUsersPage,
 } from './pages/admin/AdminPages'
+import {
+  AdminAdsPage,
+  AdminAuditPage,
+  AdminCmsPage,
+  AdminCommissionsPage,
+  AdminCustomersPage,
+  AdminDestinationsPage,
+  AdminFraudPage,
+  AdminInventoryPage,
+  AdminLanguagesPage,
+  AdminLedgerPage,
+  AdminLoyaltyPage,
+  AdminNotificationsPage,
+  AdminOnboardingPage,
+  AdminPayoutsPage,
+  AdminPromotionsPage,
+  AdminRatesPage,
+  AdminRefundsPage,
+  AdminReportsPage,
+  AdminReviewsPage,
+  AdminRolesPage,
+  AdminSupportPage,
+  AdminTaxesPage,
+  AdminTaxonomyPage,
+} from './pages/admin/AdminPlatformPages'
 import { HostPage } from './pages/HostPage'
 import {
   HotelBookingsPage,
@@ -67,9 +92,32 @@ export function OpsApp() {
           <Route index element={<AdminDashboardPage />} />
           <Route path="modules" element={<AdminModulesPage />} />
           <Route path="hotels" element={<AdminHotelsPage />} />
+          <Route path="onboarding" element={<AdminOnboardingPage />} />
           <Route path="users" element={<AdminUsersPage />} />
+          <Route path="customers" element={<AdminCustomersPage />} />
           <Route path="bookings" element={<AdminBookingsPage />} />
           <Route path="payments" element={<AdminPaymentsPage />} />
+          <Route path="inventory" element={<AdminInventoryPage />} />
+          <Route path="rates" element={<AdminRatesPage />} />
+          <Route path="commissions" element={<AdminCommissionsPage />} />
+          <Route path="refunds" element={<AdminRefundsPage />} />
+          <Route path="payouts" element={<AdminPayoutsPage />} />
+          <Route path="ledger" element={<AdminLedgerPage />} />
+          <Route path="promotions" element={<AdminPromotionsPage />} />
+          <Route path="ads" element={<AdminAdsPage />} />
+          <Route path="reviews" element={<AdminReviewsPage />} />
+          <Route path="cms" element={<AdminCmsPage />} />
+          <Route path="destinations" element={<AdminDestinationsPage />} />
+          <Route path="taxonomy" element={<AdminTaxonomyPage />} />
+          <Route path="support" element={<AdminSupportPage />} />
+          <Route path="fraud" element={<AdminFraudPage />} />
+          <Route path="notifications" element={<AdminNotificationsPage />} />
+          <Route path="languages" element={<AdminLanguagesPage />} />
+          <Route path="taxes" element={<AdminTaxesPage />} />
+          <Route path="loyalty" element={<AdminLoyaltyPage />} />
+          <Route path="reports" element={<AdminReportsPage />} />
+          <Route path="roles" element={<AdminRolesPage />} />
+          <Route path="audit" element={<AdminAuditPage />} />
           <Route path="duffel" element={<AdminDuffelPage />} />
           <Route path="settings" element={<AdminSettingsPage />} />
         </Route>

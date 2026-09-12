@@ -18,6 +18,7 @@ import {
 } from './auth.js'
 import { getGateway, PAYMENT_METHODS } from './payments.js'
 import * as duffel from './duffel.js'
+import { ensurePlatformCollections, seedPlatformAdmin, registerPlatformAdmin } from './platformAdmin.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.join(__dirname, '..')
@@ -173,6 +174,9 @@ function ensureSeed() {
       }
     }
   }
+
+  ensurePlatformCollections(db)
+  if (seedPlatformAdmin(db, { uid, audit })) changed = true
 
   if (changed) saveDb(db)
 }
@@ -1380,6 +1384,16 @@ app.patch('/api/admin/settings', authRequired, requireRoles('admin'), (req, res)
   })
   saveDb(db)
   res.json({ settings: db.settings })
+})
+
+registerPlatformAdmin(app, {
+  authRequired,
+  requireRoles,
+  loadDb,
+  saveDb,
+  uid,
+  audit,
+  publicUser,
 })
 
 const dist = path.join(ROOT, 'dist')

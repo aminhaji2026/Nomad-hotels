@@ -21,13 +21,16 @@ const platformGroups = [
     links: [
       { to: '/admin', end: true, label: 'Executive' },
       { to: '/admin/modules', label: 'Module map' },
+      { to: '/admin/reports', label: 'Reports' },
     ],
   },
   {
     label: 'Network',
     links: [
       { to: '/admin/hotels', label: 'Hotels' },
-      { to: '/admin/users', label: 'People' },
+      { to: '/admin/onboarding', label: 'Onboarding' },
+      { to: '/admin/users', label: 'Staff' },
+      { to: '/admin/customers', label: 'Customers' },
     ],
   },
   {
@@ -35,11 +38,46 @@ const platformGroups = [
     links: [
       { to: '/admin/bookings', label: 'Reservations' },
       { to: '/admin/payments', label: 'Payments' },
+      { to: '/admin/inventory', label: 'Inventory' },
+      { to: '/admin/rates', label: 'Rates' },
+      { to: '/admin/commissions', label: 'Commissions' },
+      { to: '/admin/refunds', label: 'Refunds' },
+      { to: '/admin/payouts', label: 'Payouts' },
+      { to: '/admin/ledger', label: 'Ledger' },
+    ],
+  },
+  {
+    label: 'Growth',
+    links: [
+      { to: '/admin/promotions', label: 'Promotions' },
+      { to: '/admin/ads', label: 'Ads' },
+      { to: '/admin/reviews', label: 'Reviews' },
+      { to: '/admin/loyalty', label: 'Loyalty' },
+    ],
+  },
+  {
+    label: 'Content',
+    links: [
+      { to: '/admin/cms', label: 'CMS' },
+      { to: '/admin/destinations', label: 'Destinations' },
+      { to: '/admin/taxonomy', label: 'Taxonomy' },
+    ],
+  },
+  {
+    label: 'Ops',
+    links: [
+      { to: '/admin/support', label: 'Support' },
+      { to: '/admin/fraud', label: 'Fraud' },
+      { to: '/admin/notifications', label: 'Notifications' },
     ],
   },
   {
     label: 'System',
     links: [
+      { to: '/admin/languages', label: 'Languages' },
+      { to: '/admin/taxes', label: 'Taxes' },
+      { to: '/admin/roles', label: 'Roles' },
+      { to: '/admin/audit', label: 'Audit' },
       { to: '/admin/duffel', label: 'Duffel Stay' },
       { to: '/admin/settings', label: 'Settings' },
     ],

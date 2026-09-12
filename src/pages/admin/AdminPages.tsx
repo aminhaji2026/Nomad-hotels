@@ -437,21 +437,33 @@ export function AdminModulesPage() {
   const modules = [
     { name: '1. Executive Dashboard', status: 'Live', note: 'KPIs, alerts, tops, audit feed' },
     { name: '2. Hotel & Property Management', status: 'Live', note: 'Search, feature, suspend, notes, archive' },
-    { name: '3. Hotel Onboarding & Approval', status: 'Next', note: 'Applications queue & document review' },
-    { name: '4. Hotel User & Staff Management', status: 'Partial', note: 'Invite/suspend staff live; roles matrix next' },
-    { name: '5. Customer Management', status: 'Partial', note: 'Directory live; CRM profile next' },
-    { name: '6. Reservation Management', status: 'Partial', note: 'Network bookings list live' },
-    { name: '7. Inventory & Availability', status: 'Planned', note: 'Calendars, holds, overbooking rules' },
-    { name: '8. Rates & Pricing Oversight', status: 'Planned', note: 'Rate plans and anomaly detection' },
-    { name: '9. Commission Management', status: 'Next', note: 'Default rate already feeds dashboard' },
-    { name: '10. Payment Management', status: 'Partial', note: 'Ledger + gateways live' },
-    { name: '11–13. Refunds, Payouts, Ledger', status: 'Planned', note: 'Finance suite' },
-    { name: '14–15. Promotions & Advertising', status: 'Planned', note: 'Campaigns and featured placements' },
-    { name: '16–20. Reviews, CMS, Destinations', status: 'Planned', note: 'Content & taxonomy' },
-    { name: '21–23. Support, Fraud, Comms', status: 'Planned', note: 'Ops case management' },
-    { name: '24–27. i18n, Tax, Loyalty, Reports', status: 'Planned', note: 'Growth & compliance analytics' },
-    { name: '28–29. Roles, Audit & Compliance', status: 'Partial', note: 'Hard roles + audit feed live' },
+    { name: '3. Hotel Onboarding & Approval', status: 'Live', note: 'Applications queue, documents, approve/reject' },
+    { name: '4. Hotel User & Staff Management', status: 'Live', note: 'Invite, roles, suspend staff accounts' },
+    { name: '5. Customer Management', status: 'Live', note: 'CRM search, VIP/risk, anonymize' },
+    { name: '6. Reservation Management', status: 'Live', note: 'Network bookings with admin overrides' },
+    { name: '7. Inventory & Availability', status: 'Live', note: 'Sold/available, stop-sell, adjustments' },
+    { name: '8. Rates & Pricing Oversight', status: 'Live', note: 'Rate plans and corrections' },
+    { name: '9. Commission Management', status: 'Live', note: 'Default + hotel rates, earned commission' },
+    { name: '10. Payment Management', status: 'Live', note: 'Ledger + gateways' },
+    { name: '11. Refund Management', status: 'Live', note: 'Full/partial refunds with approval thresholds' },
+    { name: '12. Hotel Payout Management', status: 'Live', note: 'Queue, approve, and mark remittances paid' },
+    { name: '13. Financial Ledger', status: 'Live', note: 'Commission, payables, refunds' },
+    { name: '14. Promotions & Coupons', status: 'Live', note: 'Campaigns with usage limits' },
+    { name: '15. Featured Listings & Ads', status: 'Live', note: 'Sponsored placements and budgets' },
+    { name: '16. Reviews & Reputation', status: 'Live', note: 'Moderation and hotel responses' },
+    { name: '17. Content Management', status: 'Live', note: 'CMS draft/publish workflow' },
+    { name: '18–20. Destinations & Taxonomy', status: 'Live', note: 'Geo pages and property options' },
+    { name: '21. Customer Support Centre', status: 'Live', note: 'Tickets linked to bookings' },
+    { name: '22. Disputes, Chargebacks & Fraud', status: 'Live', note: 'Risk flags and investigations' },
+    { name: '23. Communications', status: 'Live', note: 'Multi-channel notification templates' },
+    { name: '24. Language & Translation', status: 'Live', note: 'EN / SO / AR with RTL' },
+    { name: '25. Currency, Tax & Fees', status: 'Live', note: 'Country and city tax rules' },
+    { name: '26. Loyalty & Referrals', status: 'Live', note: 'Earning rules and liabilities' },
+    { name: '27. Reports & Analytics', status: 'Live', note: 'Executive finance and ops summary' },
+    { name: '28. Admin Roles & Permissions', status: 'Live', note: 'Granular roles and finance gates' },
+    { name: '29. Audit Logs & Compliance', status: 'Live', note: 'Searchable immutable audit trail' },
   ]
+
 
   return (
     <div className="ops-page">
@@ -606,18 +618,33 @@ export function AdminUsersPage() {
 
 export function AdminBookingsPage() {
   const [bookings, setBookings] = useState<Array<Record<string, unknown>>>([])
+  const [message, setMessage] = useState<string | null>(null)
+
+  async function load() {
+    const d = await api.adminBookings()
+    setBookings(d.bookings as Array<Record<string, unknown>>)
+  }
+
   useEffect(() => {
-    void api.adminBookings().then((d) => setBookings(d.bookings as Array<Record<string, unknown>>))
+    void load()
   }, [])
+
+  async function patch(id: string, payload: Record<string, unknown>, toast: string) {
+    await api.updateAdminBooking(id, payload)
+    setMessage(toast)
+    await load()
+  }
+
   return (
     <div className="ops-page">
       <header className="ops-header">
         <div>
-          <p className="ops-kicker">Network</p>
+          <p className="ops-kicker">Reservations</p>
           <h1>All bookings</h1>
-          <p className="muted">Every direct and Duffel reservation across NomadStay.</p>
+          <p className="muted">Search, override, flag, and annotate every reservation across NomadStay.</p>
         </div>
       </header>
+      {message && <p className="ops-toast">{message}</p>}
       <div className="ops-panel ops-table-wrap">
         <table className="ops-table">
           <thead>
@@ -628,6 +655,7 @@ export function AdminBookingsPage() {
               <th>Total</th>
               <th>Status</th>
               <th>Source</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -637,8 +665,55 @@ export function AdminBookingsPage() {
                 <td>{String(b.guestName || b.guestEmail || '—')}</td>
                 <td>{String(b.stayName)}</td>
                 <td>${Number(b.total || 0)}</td>
-                <td>{String(b.status)}</td>
+                <td>
+                  {String(b.status)}
+                  {b.flagged ? ' · flagged' : ''}
+                  {b.locked ? ' · locked' : ''}
+                </td>
                 <td>{String(b.source || 'direct')}</td>
+                <td className="ops-list__actions">
+                  <button
+                    type="button"
+                    className="btn btn--ghost"
+                    onClick={() => void patch(String(b.id), { status: 'CONFIRMED' }, 'Marked confirmed')}
+                  >
+                    Confirm
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn--ghost"
+                    onClick={() => void patch(String(b.id), { status: 'CANCELLED' }, 'Cancelled')}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn--ghost"
+                    onClick={() => void patch(String(b.id), { status: 'NO_SHOW' }, 'Marked no-show')}
+                  >
+                    No-show
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn--ghost"
+                    onClick={() =>
+                      void patch(String(b.id), { flagged: !b.flagged }, b.flagged ? 'Unflagged' : 'Flagged')
+                    }
+                  >
+                    {b.flagged ? 'Unflag' : 'Flag'}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn--ghost"
+                    onClick={() => {
+                      const note = window.prompt('Internal note')
+                      if (!note) return
+                      void patch(String(b.id), { internalNote: note }, 'Note added')
+                    }}
+                  >
+                    Note
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
