@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { AppShell, BrandLockup } from '../components/AppShell'
 
 const DEMO = [
   { label: 'Platform admin', email: 'admin@nomadstay.com', password: 'NomadAdmin2026!' },
@@ -31,21 +32,22 @@ export function StaffLoginPage() {
   }
 
   return (
-    <div className="lux-auth lux-auth--staff">
-      <div className="lux-auth__media lux-auth__media--staff" aria-hidden="true">
-        <div className="lux-auth__veil" />
-        <p className="lux-auth__eyebrow">Operations suite</p>
-        <h1 className="lux-auth__brand">NomadStay Concierge</h1>
-        <p className="lux-auth__tagline">
-          Hotel command and platform control — designed with the same quiet luxury as the guest
-          experience.
+    <AppShell hideNav>
+      <header className="top-bar">
+        <BrandLockup />
+        <Link to="/login" className="gold-link">
+          Guest login
+        </Link>
+      </header>
+
+      <main className="page-pad auth-page">
+        <p className="eyebrow">Staff portal</p>
+        <h1 className="serif-title">Sign in to manage</h1>
+        <p className="muted">
+          Hotel admins manage property. Platform admins oversee the NomadStay network.
         </p>
-      </div>
-      <div className="lux-auth__panel">
-        <p className="lux-auth__chip">Staff access</p>
-        <h2>Sign in to manage</h2>
-        <p className="muted">Hotel admins manage property. Platform admins oversee the network.</p>
-        <form className="lux-auth__form" onSubmit={onSubmit}>
+
+        <form className="booking-form" onSubmit={onSubmit}>
           <label>
             Work email
             <input
@@ -71,6 +73,7 @@ export function StaffLoginPage() {
             {busy ? 'Authenticating…' : 'Enter suite'}
           </button>
         </form>
+
         <div className="demo-accounts">
           <p className="muted small">Demo accounts</p>
           {DEMO.map((d) => (
@@ -88,10 +91,7 @@ export function StaffLoginPage() {
             </button>
           ))}
         </div>
-        <p className="lux-auth__foot">
-          Travelling with us? <Link to="/login">Guest login</Link>
-        </p>
-      </div>
-    </div>
+      </main>
+    </AppShell>
   )
 }

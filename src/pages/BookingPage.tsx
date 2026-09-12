@@ -152,10 +152,10 @@ export function BookingPage() {
 
             {error && <p className="error-text">{error}</p>}
             <button type="submit" className="btn btn--gold btn--block">
-              Request & pay
+              Request reservation
             </button>
             <p className="muted small">
-              Creams-style gateways: demo, ZAAD mobile money, or international card.
+              Concierge confirms shortly. Choose demo, ZAAD, or card to continue.
             </p>
           </form>
         )}
@@ -163,15 +163,15 @@ export function BookingPage() {
         {step === 'checking' && (
           <div className="empty-card">
             <div className="spinner" aria-hidden="true" />
-            <h2>Processing…</h2>
-            <p className="muted">Confirming rates, payment, and loyalty points.</p>
+            <h2>Checking availability…</h2>
+            <p className="muted">Confirming rates and calculating loyalty points.</p>
           </div>
         )}
 
         {step === 'confirmed' && (
           <div className="empty-card">
-            <span className="status-pill">CONFIRMED</span>
-            <h2>You’re booked</h2>
+            <span className="status-pill">REQUEST SENT</span>
+            <h2>You’re on the list</h2>
             <p className="muted">
               Reference <strong>{ref}</strong>. We emailed {email}.
             </p>

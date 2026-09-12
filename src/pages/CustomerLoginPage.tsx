@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { AppShell, BrandLockup } from '../components/AppShell'
 
 export function CustomerLoginPage() {
   const { login, register } = useAuth()
@@ -31,17 +32,28 @@ export function CustomerLoginPage() {
   }
 
   return (
-    <div className="lux-auth">
-      <div className="lux-auth__media" aria-hidden="true">
-        <div className="lux-auth__veil" />
-        <p className="lux-auth__eyebrow">Guest arrival</p>
-        <h1 className="lux-auth__brand">NomadStay</h1>
-        <p className="lux-auth__tagline">Private stays, polished journeys, loyal rewards.</p>
-      </div>
-      <div className="lux-auth__panel">
-        <div className="lux-auth__tabs">
+    <AppShell hideNav>
+      <header className="top-bar">
+        <BrandLockup />
+        <Link to="/" className="gold-link">
+          Explore
+        </Link>
+      </header>
+
+      <main className="page-pad auth-page">
+        <p className="eyebrow">Guest access</p>
+        <h1 className="serif-title">{mode === 'login' ? 'Welcome back' : 'Join NomadStay'}</h1>
+        <p className="muted">
+          {mode === 'login'
+            ? 'Sign in for trips, saved stays, and loyalty points.'
+            : 'Create a membership and earn welcome points instantly.'}
+        </p>
+
+        <div className="segmented segmented--tabs" role="tablist" aria-label="Account mode">
           <button
             type="button"
+            role="tab"
+            aria-selected={mode === 'login'}
             className={mode === 'login' ? 'is-active' : ''}
             onClick={() => setMode('login')}
           >
@@ -49,19 +61,16 @@ export function CustomerLoginPage() {
           </button>
           <button
             type="button"
+            role="tab"
+            aria-selected={mode === 'register'}
             className={mode === 'register' ? 'is-active' : ''}
             onClick={() => setMode('register')}
           >
             Join
           </button>
         </div>
-        <h2>{mode === 'login' ? 'Welcome back' : 'Create your membership'}</h2>
-        <p className="muted">
-          {mode === 'login'
-            ? 'Access trips, saved stays, and loyalty points.'
-            : 'Earn welcome points the moment you join.'}
-        </p>
-        <form className="lux-auth__form" onSubmit={onSubmit}>
+
+        <form className="booking-form" onSubmit={onSubmit}>
           {mode === 'register' && (
             <label>
               Full name
@@ -91,16 +100,14 @@ export function CustomerLoginPage() {
           </label>
           {error && <p className="form-error">{error}</p>}
           <button type="submit" className="btn btn--gold btn--block" disabled={busy}>
-            {busy ? 'Please wait…' : mode === 'login' ? 'Enter NomadStay' : 'Join NomadStay'}
+            {busy ? 'Please wait…' : mode === 'login' ? 'Sign in' : 'Create account'}
           </button>
         </form>
-        <p className="lux-auth__foot">
+
+        <p className="muted small auth-page__foot">
           Hotel partner or platform staff? <Link to="/staff/login">Staff portal</Link>
         </p>
-        <Link className="lux-auth__back" to="/">
-          ← Back to explore
-        </Link>
-      </div>
-    </div>
+      </main>
+    </AppShell>
   )
 }

@@ -1,5 +1,6 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { BrandLockup } from './AppShell'
 
 type AdminShellProps = {
   variant: 'hotel' | 'platform'
@@ -30,28 +31,18 @@ export function AdminShell({ variant }: AdminShellProps) {
   const links = variant === 'hotel' ? hotelLinks : platformLinks
 
   return (
-    <div className={`ops-shell ops-shell--${variant}`}>
-      <aside className="ops-nav">
-        <div className="ops-nav__brand">
-          <span className="ops-nav__mark">N</span>
-          <div>
-            <strong>NomadStay</strong>
-            <p>{variant === 'hotel' ? 'Hotel suite' : 'Platform control'}</p>
+    <div className="app-shell app-shell--bare">
+      <div className="app-frame ops-frame">
+        <header className="top-bar ops-top">
+          <div className="ops-top__brand">
+            <BrandLockup compact />
+            <span className="ops-top__badge">
+              {variant === 'hotel' ? 'Hotel suite' : 'Platform'}
+            </span>
           </div>
-        </div>
-        <nav>
-          {links.map((link) => (
-            <NavLink key={link.to} to={link.to} end={'end' in link ? link.end : false}>
-              {link.label}
-            </NavLink>
-          ))}
-        </nav>
-        <div className="ops-nav__foot">
-          <p>{user?.name}</p>
-          <p className="muted small">{user?.email}</p>
           <button
             type="button"
-            className="btn btn--ghost btn--block"
+            className="btn btn--ghost"
             onClick={() => {
               logout()
               navigate('/staff/login')
@@ -59,10 +50,22 @@ export function AdminShell({ variant }: AdminShellProps) {
           >
             Sign out
           </button>
+        </header>
+
+        <nav className="ops-tabs" aria-label={variant === 'hotel' ? 'Hotel admin' : 'Platform admin'}>
+          {links.map((link) => (
+            <NavLink key={link.to} to={link.to} end={'end' in link ? link.end : false}>
+              {link.label}
+            </NavLink>
+          ))}
+        </nav>
+
+        <div className="ops-main">
+          <p className="ops-user muted small">
+            {user?.name} · {user?.email}
+          </p>
+          <Outlet />
         </div>
-      </aside>
-      <div className="ops-main">
-        <Outlet />
       </div>
     </div>
   )
