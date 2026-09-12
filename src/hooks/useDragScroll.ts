@@ -3,6 +3,7 @@ import { useEffect } from 'react'
 /**
  * Enables click-drag horizontal scrolling on overflow rails.
  * Native overflow already handles touch/wheel; this covers desktop mouse drag.
+ * Vertical gestures are left alone so the page can scroll.
  */
 export function useDragScroll(selector = '.h-scroll, .hero-reel__track') {
   useEffect(() => {
@@ -14,7 +15,9 @@ export function useDragScroll(selector = '.h-scroll, .hero-reel__track') {
       bound.add(el)
 
       let active = false
+      let dragging = false
       let startX = 0
+      let startY = 0
       let startLeft = 0
       let moved = false
 
@@ -22,28 +25,46 @@ export function useDragScroll(selector = '.h-scroll, .hero-reel__track') {
         if (event.pointerType === 'touch') return
         if (event.button !== 0) return
         active = true
+        dragging = false
         moved = false
         startX = event.clientX
+        startY = event.clientY
         startLeft = el.scrollLeft
-        el.setPointerCapture(event.pointerId)
-        el.classList.add('is-dragging')
       }
 
       const onMove = (event: PointerEvent) => {
         if (!active) return
         const dx = event.clientX - startX
-        if (Math.abs(dx) > 3) moved = true
+        const dy = event.clientY - startY
+
+        if (!dragging) {
+          if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return
+          // Vertical intent → release so the page can scroll.
+          if (Math.abs(dy) > Math.abs(dx)) {
+            active = false
+            return
+          }
+          dragging = true
+          el.setPointerCapture(event.pointerId)
+          el.classList.add('is-dragging')
+        }
+
+        moved = true
         el.scrollLeft = startLeft - dx
+        event.preventDefault()
       }
 
       const onUp = (event: PointerEvent) => {
-        if (!active) return
+        if (!active && !dragging) return
         active = false
-        el.classList.remove('is-dragging')
-        try {
-          el.releasePointerCapture(event.pointerId)
-        } catch {
-          /* already released */
+        if (dragging) {
+          dragging = false
+          el.classList.remove('is-dragging')
+          try {
+            el.releasePointerCapture(event.pointerId)
+          } catch {
+            /* already released */
+          }
         }
       }
 

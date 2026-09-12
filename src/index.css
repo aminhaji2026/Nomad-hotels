@@ -3421,7 +3421,12 @@ input:focus, select:focus, textarea:focus {
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
-  touch-action: pan-x;
+  /* Full-bleed hero: prioritize vertical page scroll. Horizontal motion is auto-driven. */
+  touch-action: pan-y pinch-zoom;
+}
+
+.hero-reel {
+  touch-action: pan-y pinch-zoom;
 }
 
 .hero-reel__track::-webkit-scrollbar {
@@ -3458,7 +3463,7 @@ input:focus, select:focus, textarea:focus {
   overflow-x: auto;
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
-  touch-action: pan-x;
+  touch-action: pan-x pan-y;
   overscroll-behavior-x: contain;
   scroll-snap-type: x proximity;
 }
@@ -3567,7 +3572,7 @@ input:focus, select:focus, textarea:focus {
   overflow-x: auto !important;
   overflow-y: hidden !important;
   -webkit-overflow-scrolling: touch;
-  touch-action: pan-x pinch-zoom;
+  touch-action: pan-x pan-y pinch-zoom;
   overscroll-behavior-x: contain;
   scroll-snap-type: x mandatory;
   padding-bottom: 0.45rem;
