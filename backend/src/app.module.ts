@@ -12,14 +12,26 @@ import { AccessModule } from './modules/access/access.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { AvailabilityModule } from './modules/availability/availability.module';
+import { FinanceModule } from './modules/finance/finance.module';
+import { FrontDeskModule } from './modules/frontdesk/frontdesk.module';
 import { HealthModule } from './modules/health/health.module';
 import { HotelsModule } from './modules/hotels/hotels.module';
+import { HousekeepingModule } from './modules/housekeeping/housekeeping.module';
 import { InventoryModule } from './modules/inventory/inventory.module';
+import { MaintenanceModule } from './modules/maintenance/maintenance.module';
+import { MessagingModule } from './modules/messaging/messaging.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 import { OnboardingModule } from './modules/onboarding/onboarding.module';
+import { PaymentsModule } from './modules/payments/payments.module';
+import { PlatformModule } from './modules/platform/platform.module';
+import { PromotionsModule } from './modules/promotions/promotions.module';
 import { RatesModule } from './modules/rates/rates.module';
+import { ReportsModule } from './modules/reports/reports.module';
 import { ReservationsModule } from './modules/reservations/reservations.module';
+import { ReviewsModule } from './modules/reviews/reviews.module';
 import { RoomsModule } from './modules/rooms/rooms.module';
 import { SearchModule } from './modules/search/search.module';
+import { SupportModule } from './modules/support/support.module';
 import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
@@ -48,6 +60,18 @@ import { PrismaModule } from './prisma/prisma.module';
     InventoryModule,
     SearchModule,
     ReservationsModule,
+    PaymentsModule,
+    FinanceModule,
+    FrontDeskModule,
+    HousekeepingModule,
+    MaintenanceModule,
+    MessagingModule,
+    NotificationsModule,
+    ReviewsModule,
+    PromotionsModule,
+    SupportModule,
+    ReportsModule,
+    PlatformModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

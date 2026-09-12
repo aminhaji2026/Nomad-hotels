@@ -72,5 +72,29 @@ Base: **`/api/v1`**. Auth: `Bearer <accessToken>` unless marked public.
 ## Audit
 - `GET /audit-logs` (scoped / platform)
 
-## Later phases (contract reserved)
-`/search`, `/reservations`, `/payments`, `/front-desk`, `/housekeeping`, `/maintenance`, `/reviews`, `/promotions`, `/support`, `/reports`, `/platform/*`
+## Search & reservations (Phase 2)
+- `GET /search/hotels` · `GET /search/hotels/:propertyId`
+- `POST /reservations` · `GET /reservations/:id` · `POST /reservations/:id/cancel` · `PATCH /reservations/:id`
+
+## Payments & finance (Phase 3)
+- `POST /payments/intents` · `POST /payments/:id/capture` · `POST /payments/:id/refunds`
+- `GET /reservations/:reservationId/payments` · `POST /webhooks/payments`
+- `GET /properties/:propertyId/statements` · `POST /payouts` · `POST /payouts/:id/mark-paid` · `POST /ledger/adjustments`
+
+## Operations (Phase 4)
+- `GET /properties/:propertyId/arrivals|departures|in-house`
+- `POST /bookings/:confirmationNumber/check-in|check-out|no-show`
+- `POST /bookings/:confirmationNumber/rooms/:reservationRoomId/assign`
+- `GET|POST /properties/:propertyId/housekeeping/tasks` · `PATCH /housekeeping/tasks/:id`
+- `GET|POST /properties/:propertyId/maintenance/tickets` · `PATCH /maintenance/tickets/:id`
+- `POST|GET /messages/threads` · `GET|POST /messages/threads/:id`
+- `GET /me/notifications` · `POST /notifications/send` · `GET|POST /notification-templates`
+
+## Growth & platform (Phase 5)
+- `POST /reviews` · `GET /properties/:propertyId/reviews` · `POST /reviews/:id/reply` · `PATCH /reviews/:id/moderate`
+- `POST|GET /promotions` · `POST /promotions/validate` · `PATCH /promotions/:id/deactivate`
+- `POST|GET /support/tickets` · `GET|PATCH /support/tickets/:id` · `POST /support/tickets/:id/messages`
+- `GET /properties/:propertyId/reports/occupancy|revenue` · `GET /platform/reports/overview`
+- `GET|POST /platform/settings` · `GET /destinations` · `POST|PATCH /platform/destinations`
+- `GET|POST /platform/exchange-rates` · `GET /platform/webhooks/events` · `GET /platform/audit-logs`
+- `POST /platform/properties/:id/feature`

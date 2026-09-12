@@ -49,9 +49,24 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
         platform.forEach((p) => permissions.add(p));
       }
       if (hotel) hotel.forEach((p) => permissions.add(p));
-      (m.customPermissions ?? []).forEach((p) =>
-        permissions.add(p as PermissionCode),
-      );
+      const extras: string[] = (() => {
+        const raw = m.customPermissions as unknown;
+        if (Array.isArray(raw)) return raw.map(String);
+        if (typeof raw === 'string' && raw.trim()) {
+          try {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) return parsed.map(String);
+          } catch {
+            /* treat as CSV */
+          }
+          return raw
+            .split(',')
+            .map((s: string) => s.trim())
+            .filter(Boolean);
+        }
+        return [];
+      })();
+      extras.forEach((p) => permissions.add(p as PermissionCode));
       return {
         id: m.id,
         roleCode,

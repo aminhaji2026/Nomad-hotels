@@ -256,6 +256,47 @@ async function main() {
     });
   }
 
+  await prisma.destination.upsert({
+    where: { slug: 'hargeisa' },
+    update: { name: 'Hargeisa', countryCode: 'SO', isActive: true },
+    create: {
+      name: 'Hargeisa',
+      slug: 'hargeisa',
+      countryCode: 'SO',
+      type: 'city',
+      latitude: 9.56,
+      longitude: 44.065,
+      isActive: true,
+    },
+  });
+
+  await prisma.notificationTemplate.upsert({
+    where: {
+      code_channel_locale: {
+        code: 'booking_confirmed',
+        channel: 'EMAIL',
+        locale: 'en',
+      },
+    },
+    update: {
+      subject: 'Booking confirmed {{confirmationNumber}}',
+      body: 'Hello {{guestName}}, your stay at {{propertyName}} is confirmed.',
+    },
+    create: {
+      code: 'booking_confirmed',
+      channel: 'EMAIL',
+      locale: 'en',
+      subject: 'Booking confirmed {{confirmationNumber}}',
+      body: 'Hello {{guestName}}, your stay at {{propertyName}} is confirmed.',
+    },
+  });
+
+  await prisma.systemSetting.upsert({
+    where: { key: 'platform.default_commission_percent' },
+    update: { value: 12.5 },
+    create: { key: 'platform.default_commission_percent', value: 12.5 },
+  });
+
   console.log('Seed complete');
   console.log('  superadmin@nomadstay.local / ChangeMe123!');
   console.log('  owner@demo-hotel.local / ChangeMe123!');
