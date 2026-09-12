@@ -53,11 +53,40 @@ export function ExplorePage() {
     navigate(`/results?${params.toString()}`)
   }
 
+  function scrollToSearch() {
+    document.getElementById('atelier-search')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
   return (
-    <AppShell>
-      <header className="top-bar">
-        <BrandLockup />
-        <div className="top-bar__right">
+    <AppShell flush>
+      <section className="atelier-hero" aria-label="NomadStay introduction">
+        <img
+          className="atelier-hero__media"
+          src="https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=1600&q=80"
+          alt=""
+        />
+        <div className="atelier-hero__veil" aria-hidden="true" />
+        <div className="atelier-hero__content">
+          <BrandLockup onDark />
+          <h1>Stay where the world softens.</h1>
+          <p>An atelier of handpicked sanctuaries across the Horn of Africa and beyond.</p>
+          <div className="atelier-hero__cta">
+            <button type="button" className="btn btn--gold" onClick={scrollToSearch}>
+              Explore stays
+            </button>
+            <Link to={user ? '/profile' : '/login'} className="btn btn--ghost">
+              {user ? 'Your membership' : 'Member entry'}
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <div className="explore-panel" id="atelier-search">
+        <header className="top-bar top-bar--panel">
+          <div>
+            <p className="eyebrow">Curated for you</p>
+            <h2 className="serif-title">Find your next sanctuary</h2>
+          </div>
           {user ? (
             <Link to="/profile" className="points-chip" title="Loyalty points">
               ✦ {user.points.toLocaleString()} pts
@@ -67,28 +96,7 @@ export function ExplorePage() {
               Join loyalty
             </button>
           )}
-          <button type="button" className="icon-btn" aria-label="Notifications">
-            ⌁
-            <span className="dot" />
-          </button>
-        </div>
-      </header>
-
-      <main className="page-pad explore">
-        <section className="hero-home">
-          <div>
-            <p className="eyebrow">Welcome back{user ? `, ${user.name.split(' ')[0]}` : ''}</p>
-            <h1>
-              Discover your next <em>journey</em>
-            </h1>
-          </div>
-          <div className="hero-home__orb">
-            <img
-              src="https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=600&q=80"
-              alt=""
-            />
-          </div>
-        </section>
+        </header>
 
         <div className="chip-row" role="tablist" aria-label="Categories">
           {categories.map((item) => (
@@ -164,7 +172,11 @@ export function ExplorePage() {
           </div>
           <div className="h-scroll">
             {destinations.map((dest) => (
-              <Link key={dest.id} to={`/results?city=${encodeURIComponent(dest.name)}`} className="dest-card">
+              <Link
+                key={dest.id}
+                to={`/results?city=${encodeURIComponent(dest.name)}`}
+                className="dest-card"
+              >
                 <img src={dest.image} alt="" loading="lazy" />
                 <div>
                   <strong>{dest.name}</strong>
@@ -177,7 +189,7 @@ export function ExplorePage() {
 
         <section className="rail-section">
           <div className="section-head">
-            <h2>Luxury Escapes</h2>
+            <h2>Private escapes</h2>
             <Link to="/results?sort=luxury">See all</Link>
           </div>
           <div className="h-scroll h-scroll--wide">
@@ -196,7 +208,7 @@ export function ExplorePage() {
 
         <section className="rail-section">
           <div className="section-head">
-            <h2>Top Rated Stays</h2>
+            <h2>Most loved stays</h2>
             <Link to="/results">See all</Link>
           </div>
           <div className="stack">
@@ -213,7 +225,7 @@ export function ExplorePage() {
 
         <section className="rail-section">
           <div className="section-head">
-            <h2>Premium Vehicles</h2>
+            <h2>Chauffeured travel</h2>
             <Link to="/results?category=vehicles">See all</Link>
           </div>
           <div className="h-scroll">
@@ -229,7 +241,7 @@ export function ExplorePage() {
             ))}
           </div>
         </section>
-      </main>
+      </div>
     </AppShell>
   )
 }

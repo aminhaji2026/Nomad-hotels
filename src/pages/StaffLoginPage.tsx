@@ -33,16 +33,20 @@ export function StaffLoginPage() {
 
   return (
     <AppShell hideNav>
-      <header className="top-bar">
-        <BrandLockup />
-        <Link to="/login" className="gold-link">
-          Guest login
-        </Link>
-      </header>
+      <section className="auth-atelier auth-atelier--staff" aria-hidden="true">
+        <img
+          src="https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80"
+          alt=""
+        />
+        <div className="auth-atelier__veil" />
+        <div className="auth-atelier__brand">
+          <BrandLockup onDark />
+        </div>
+      </section>
 
       <main className="page-pad auth-page">
         <p className="eyebrow">Staff portal</p>
-        <h1 className="serif-title">Sign in to manage</h1>
+        <h1 className="serif-title">Concierge access</h1>
         <p className="muted">
           Hotel admins manage property. Platform admins oversee the NomadStay network.
         </p>
@@ -91,6 +95,10 @@ export function StaffLoginPage() {
             </button>
           ))}
         </div>
+
+        <p className="muted small auth-page__foot">
+          Travelling with us? <Link to="/login">Guest login</Link>
+        </p>
       </main>
     </AppShell>
   )

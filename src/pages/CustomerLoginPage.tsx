@@ -33,16 +33,20 @@ export function CustomerLoginPage() {
 
   return (
     <AppShell hideNav>
-      <header className="top-bar">
-        <BrandLockup />
-        <Link to="/" className="gold-link">
-          Explore
-        </Link>
-      </header>
+      <section className="auth-atelier" aria-hidden="true">
+        <img
+          src="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=1200&q=80"
+          alt=""
+        />
+        <div className="auth-atelier__veil" />
+        <div className="auth-atelier__brand">
+          <BrandLockup onDark />
+        </div>
+      </section>
 
       <main className="page-pad auth-page">
         <p className="eyebrow">Guest access</p>
-        <h1 className="serif-title">{mode === 'login' ? 'Welcome back' : 'Join NomadStay'}</h1>
+        <h1 className="serif-title">{mode === 'login' ? 'A quiet return' : 'Begin membership'}</h1>
         <p className="muted">
           {mode === 'login'
             ? 'Sign in for trips, saved stays, and loyalty points.'
