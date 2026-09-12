@@ -1233,15 +1233,15 @@ export function AdminReportsPage() {
     void api.adminReportsSummary().then((d) => setSummary(d as Row))
   }, [])
   if (!summary) return <div className="ops-page"><p className="muted">Loading reports…</p></div>
-  const cards = [
-    ['Bookings', summary.bookings],
+  const cards: Array<[string, string]> = [
+    ['Bookings', String(summary.bookings ?? 0)],
     ['Revenue', money(Number(summary.revenue || 0))],
     ['Commission', money(Number(summary.commission || 0))],
     ['Refunds', money(Number(summary.refunds || 0))],
     ['Payouts', money(Number(summary.payouts || 0))],
-    ['Failed payments', summary.paymentsFailed],
-    ['Open support', summary.supportOpen],
-    ['Open fraud flags', summary.fraudOpen],
+    ['Failed payments', String(summary.paymentsFailed ?? 0)],
+    ['Open support', String(summary.supportOpen ?? 0)],
+    ['Open fraud flags', String(summary.fraudOpen ?? 0)],
   ]
   return (
     <div className="ops-page">
@@ -1252,9 +1252,9 @@ export function AdminReportsPage() {
       />
       <section className="ops-metrics">
         {cards.map(([label, value]) => (
-          <article key={String(label)}>
+          <article key={label}>
             <p>{label}</p>
-            <strong>{value as ReactNode}</strong>
+            <strong>{value}</strong>
           </article>
         ))}
       </section>
