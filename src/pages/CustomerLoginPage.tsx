@@ -44,10 +44,10 @@ export function CustomerLoginPage() {
         </div>
       </section>
 
-      <main className="page-pad auth-page">
-        <p className="eyebrow">Guest access</p>
-        <h1 className="serif-title">{mode === 'login' ? 'A quiet return' : 'Begin membership'}</h1>
-        <p className="muted">
+      <main className="page-pad auth-page lux-stagger">
+        <p className="eyebrow lux-stagger__item">Guest access</p>
+        <h1 className="serif-title lux-stagger__item">{mode === 'login' ? 'A quiet return' : 'Begin membership'}</h1>
+        <p className="muted lux-stagger__item">
           {mode === 'login'
             ? 'Sign in for trips, saved stays, and loyalty points.'
             : 'Create a membership and earn welcome points instantly.'}

@@ -59,9 +59,14 @@ function Icon({ name }: { name: (typeof items)[number]['icon'] }) {
 
 export function BottomNav() {
   return (
-    <nav className="bottom-nav" aria-label="Primary">
+    <nav className="bottom-nav lux-nav" aria-label="Primary">
       {items.map((item) => (
-        <NavLink key={item.to} to={item.to} end={'end' in item ? item.end : false} className="bottom-nav__item">
+        <NavLink
+          key={item.to}
+          to={item.to}
+          end={'end' in item ? item.end : false}
+          className={({ isActive }) => `bottom-nav__item${isActive ? ' is-active' : ''}`}
+        >
           <span className="bottom-nav__icon">
             <Icon name={item.icon} />
           </span>

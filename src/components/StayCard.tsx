@@ -12,7 +12,7 @@ export function StayCard({ stay, nights = 4, saved = false, onToggleSave }: Stay
   const total = stay.nightlyFrom * nights
 
   return (
-    <article className="stay-card">
+    <article className="stay-card lux-card">
       <div className="stay-card__media">
         <Link to={`/stay/${stay.id}`}>
           <img src={stay.image} alt={stay.name} loading="lazy" />

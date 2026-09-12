@@ -7,6 +7,7 @@ import { useStays } from '../hooks/useStays'
 import { AppShell, BrandLockup } from '../components/AppShell'
 import { StayCard } from '../components/StayCard'
 import { StayCardSkeleton } from '../components/Skeleton'
+import { Reveal } from '../components/Reveal'
 
 const categories = [
   { id: 'hotels', label: 'Hotels' },
@@ -66,12 +67,15 @@ export function ExplorePage() {
           alt=""
         />
         <div className="atelier-hero__veil" aria-hidden="true" />
-        <div className="atelier-hero__content">
-          <BrandLockup onDark />
-          <h1>Stay where the world softens.</h1>
-          <p>An atelier of handpicked sanctuaries across the Horn of Africa and beyond.</p>
-          <div className="atelier-hero__cta">
-            <button type="button" className="btn btn--gold" onClick={scrollToSearch}>
+        <div className="atelier-hero__grain" aria-hidden="true" />
+        <div className="atelier-hero__content lux-stagger">
+          <div className="lux-stagger__item">
+            <BrandLockup onDark />
+          </div>
+          <h1 className="lux-stagger__item">Stay where the world softens.</h1>
+          <p className="lux-stagger__item">An atelier of handpicked sanctuaries across the Horn of Africa and beyond.</p>
+          <div className="atelier-hero__cta lux-stagger__item">
+            <button type="button" className="btn btn--gold lux-shimmer" onClick={scrollToSearch}>
               Explore stays
             </button>
             <Link to={user ? '/profile' : '/login'} className="btn btn--ghost">
@@ -141,12 +145,12 @@ export function ExplorePage() {
               </select>
             </label>
           </div>
-          <button type="submit" className="btn btn--gold btn--block">
+          <button type="submit" className="btn btn--gold btn--block lux-shimmer">
             Search stays
           </button>
         </form>
 
-        <section className="rail-section">
+        <Reveal className="rail-section-wrap"><section className="rail-section">
           <div className="section-head">
             <h2>Horn of Africa picks</h2>
           </div>
@@ -164,9 +168,9 @@ export function ExplorePage() {
                     />
                   ))}
           </div>
-        </section>
+        </section></Reveal>
 
-        <section className="rail-section">
+        <Reveal className="rail-section-wrap"><section className="rail-section">
           <div className="section-head">
             <h2>Destinations</h2>
           </div>
@@ -185,9 +189,9 @@ export function ExplorePage() {
               </Link>
             ))}
           </div>
-        </section>
+        </section></Reveal>
 
-        <section className="rail-section">
+        <Reveal className="rail-section-wrap"><section className="rail-section">
           <div className="section-head">
             <h2>Private escapes</h2>
             <Link to="/results?sort=luxury">See all</Link>
@@ -204,9 +208,9 @@ export function ExplorePage() {
               </Link>
             ))}
           </div>
-        </section>
+        </section></Reveal>
 
-        <section className="rail-section">
+        <Reveal className="rail-section-wrap"><section className="rail-section">
           <div className="section-head">
             <h2>Most loved stays</h2>
             <Link to="/results">See all</Link>
@@ -221,9 +225,9 @@ export function ExplorePage() {
               />
             ))}
           </div>
-        </section>
+        </section></Reveal>
 
-        <section className="rail-section">
+        <Reveal className="rail-section-wrap"><section className="rail-section">
           <div className="section-head">
             <h2>Chauffeured travel</h2>
             <Link to="/results?category=vehicles">See all</Link>
@@ -240,7 +244,7 @@ export function ExplorePage() {
               </article>
             ))}
           </div>
-        </section>
+        </section></Reveal>
       </div>
     </AppShell>
   )

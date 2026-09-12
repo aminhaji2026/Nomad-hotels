@@ -44,10 +44,10 @@ export function StaffLoginPage() {
         </div>
       </section>
 
-      <main className="page-pad auth-page">
-        <p className="eyebrow">Staff portal</p>
-        <h1 className="serif-title">Concierge access</h1>
-        <p className="muted">
+      <main className="page-pad auth-page lux-stagger">
+        <p className="eyebrow lux-stagger__item">Staff portal</p>
+        <h1 className="serif-title lux-stagger__item">Concierge access</h1>
+        <p className="muted lux-stagger__item">
           Hotel admins manage property. Platform admins oversee the NomadStay network.
         </p>
 

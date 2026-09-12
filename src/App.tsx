@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AdminShell } from './components/AdminShell'
+import { PageTransition } from './components/PageTransition'
 import { RequireAuth } from './components/RequireAuth'
 import { AuthProvider } from './context/AuthContext'
 import { SavedProvider } from './context/SavedContext'
@@ -39,6 +40,7 @@ export default function App() {
       <UserProvider>
         <SavedProvider>
           <BrowserRouter>
+            <PageTransition>
             <Routes>
               <Route path="/" element={<ExplorePage />} />
               <Route path="/results" element={<ResultsPage />} />
@@ -88,6 +90,7 @@ export default function App() {
 
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
+            </PageTransition>
           </BrowserRouter>
         </SavedProvider>
       </UserProvider>
