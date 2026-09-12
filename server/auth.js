@@ -1,7 +1,8 @@
 import { createHash, randomBytes, scryptSync, timingSafeEqual } from 'node:crypto'
 import jwt from 'jsonwebtoken'
 
-const JWT_SECRET = process.env.JWT_SECRET || 'nomadstay-dev-secret-change-me'
+const JWT_SECRET =
+  process.env.JWT_SECRET || process.env.AUTH_SECRET || 'nomadstay-dev-secret-change-me'
 const TOKEN_TTL = process.env.JWT_TTL || '7d'
 
 export function hashPassword(password) {
