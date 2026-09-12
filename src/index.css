@@ -1745,6 +1745,9 @@ p {
   background: rgba(21, 32, 28, 0.02);
   border-radius: 16px;
   padding: 0.95rem;
+  display: grid;
+  gap: 0.2rem;
+  align-content: start;
 }
 
 .ops-metrics p {
@@ -1754,9 +1757,15 @@ p {
 }
 
 .ops-metrics strong {
+  display: block;
   font-family: var(--font-serif);
   font-size: 1.5rem;
   color: var(--gold-soft);
+}
+
+.ops-metrics .muted.small {
+  display: block;
+  line-height: 1.35;
 }
 
 .ops-grid {
