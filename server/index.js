@@ -159,7 +159,8 @@ function ensureSeed() {
       user.role = staff.role
       user.stayIds = staff.stayIds || []
       user.status = 'ACTIVE'
-      if (!user.passwordHash) user.passwordHash = hashPassword(staff.password)
+      // Keep demo staff passwords in sync with published credentials.
+      user.passwordHash = hashPassword(staff.password)
       changed = true
     }
     if (staff.role === 'hotel_admin') {

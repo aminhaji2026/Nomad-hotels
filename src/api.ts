@@ -1,10 +1,18 @@
 type ApiBody = BodyInit | Record<string, unknown> | unknown[] | null | undefined
 
+/** Ops builds can point at the customer API host so login does not depend on a same-origin proxy. */
+const API_BASE = String(import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
+
 let authToken: string | null =
   typeof localStorage !== 'undefined' ? localStorage.getItem('nomadstay-token') : null
 
 export function setAuthToken(token: string | null) {
   authToken = token
+}
+
+function apiUrl(path: string) {
+  if (/^https?:\/\//i.test(path)) return path
+  return `${API_BASE}${path}`
 }
 
 async function request<T>(path: string, options: Omit<RequestInit, 'body'> & { body?: ApiBody } = {}): Promise<T> {
@@ -20,7 +28,7 @@ async function request<T>(path: string, options: Omit<RequestInit, 'body'> & { b
     !(body instanceof URLSearchParams) &&
     !ArrayBuffer.isView(body)
 
-  const res = await fetch(path, {
+  const res = await fetch(apiUrl(path), {
     ...rest,
     headers: {
       ...(isPlainObject ? { 'Content-Type': 'application/json' } : {}),
