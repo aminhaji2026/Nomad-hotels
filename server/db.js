@@ -18,6 +18,17 @@ function emptyDb() {
     bookings: [],
     ledger: [],
     referrals: [],
+    payments: [],
+    rooms: [],
+    messages: [],
+    audit: [],
+    settings: {
+      platformName: 'NomadStay',
+      defaultCurrency: 'USD',
+      defaultGateway: 'mock',
+      supportEmail: 'concierge@nomadstay.com',
+      duffelEnabled: true,
+    },
   }
 }
 
@@ -28,7 +39,13 @@ export function loadDb() {
     saveDb(db)
     return db
   }
-  return JSON.parse(fs.readFileSync(DB_PATH, 'utf8'))
+  const db = JSON.parse(fs.readFileSync(DB_PATH, 'utf8'))
+  const base = emptyDb()
+  for (const key of Object.keys(base)) {
+    if (db[key] === undefined) db[key] = base[key]
+  }
+  if (!db.settings) db.settings = base.settings
+  return db
 }
 
 export function saveDb(db) {
@@ -43,6 +60,20 @@ export function uid(prefix = '') {
 export function makeReferralCode(name = 'NS') {
   const base = name.replace(/[^a-zA-Z]/g, '').slice(0, 4).toUpperCase() || 'NS'
   return `${base}${Math.random().toString(36).slice(2, 6).toUpperCase()}`
+}
+
+export function audit(db, { actorId, action, entity, entityId, meta = {} }) {
+  db.audit = db.audit || []
+  db.audit.unshift({
+    id: uid('aud_'),
+    actorId,
+    action,
+    entity,
+    entityId,
+    meta,
+    createdAt: new Date().toISOString(),
+  })
+  if (db.audit.length > 500) db.audit = db.audit.slice(0, 500)
 }
 
 export { DATA_DIR, DB_PATH }

@@ -57,6 +57,11 @@ export function ProfilePage() {
             <button type="button" className="btn btn--gold" onClick={() => void onJoin()}>
               Activate loyalty
             </button>
+            <p className="muted small" style={{ marginTop: '1rem' }}>
+              Prefer a password? <Link to="/login">Guest login</Link>
+              {' · '}
+              <Link to="/staff/login">Staff portal</Link>
+            </p>
           </div>
         )}
 
