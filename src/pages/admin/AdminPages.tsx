@@ -1,64 +1,224 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { api, type ApiStay, type AuthUser, type PaymentMethod } from '../../api'
 import { useAuth } from '../../context/AuthContext'
 
+function money(n: number) {
+  return `$${Number(n || 0).toLocaleString()}`
+}
+
 export function AdminDashboardPage() {
   const { user } = useAuth()
+  const [range, setRange] = useState('30')
   const [data, setData] = useState<Record<string, unknown> | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    setError(null)
     void api
-      .adminDashboard()
+      .adminDashboard(range)
       .then(setData)
       .catch((err) => setError(err instanceof Error ? err.message : 'Failed to load'))
-  }, [])
+  }, [range])
 
-  if (error) return <div className="ops-page"><p className="form-error">{error}</p></div>
-  if (!data) return <div className="ops-page"><p className="muted">Loading control center…</p></div>
+  if (error) {
+    return (
+      <div className="ops-page">
+        <p className="form-error">{error}</p>
+      </div>
+    )
+  }
+  if (!data) {
+    return (
+      <div className="ops-page">
+        <p className="muted">Loading executive dashboard…</p>
+      </div>
+    )
+  }
 
-  const summary = data.summary as Record<string, number>
-  const duffel = data.duffel as Record<string, unknown>
+  const summary = (data.summary || {}) as Record<string, number>
+  const alerts = (data.alerts as Array<{ level: string; text: string }>) || []
+  const topHotels = (data.topHotels as Array<Record<string, unknown>>) || []
+  const topDestinations = (data.topDestinations as Array<Record<string, unknown>>) || []
+  const topRoomTypes = (data.topRoomTypes as Array<Record<string, unknown>>) || []
+  const bookingSources = (data.bookingSources as Array<Record<string, unknown>>) || []
   const recentBookings = (data.recentBookings as Array<Record<string, unknown>>) || []
   const recentPayments = (data.recentPayments as Array<Record<string, unknown>>) || []
+  const audit = (data.audit as Array<Record<string, unknown>>) || []
+  const duffel = (data.duffel || {}) as Record<string, unknown>
 
   return (
     <div className="ops-page">
       <header className="ops-header">
         <div>
-          <p className="ops-kicker">Platform control</p>
+          <p className="ops-kicker">Executive dashboard</p>
           <h1>Hello, {user?.name?.split(' ')[0] || 'Admin'}</h1>
-          <p className="muted">Network health across hotels, guests, payments, and Duffel Stay.</p>
+          <p className="muted">
+            Live network pulse — hotels, guests, revenue, arrivals, and operational alerts.
+          </p>
         </div>
+        <label className="ops-range">
+          Range
+          <select value={range} onChange={(e) => setRange(e.target.value)} aria-label="Dashboard range">
+            <option value="7">Last 7 days</option>
+            <option value="30">Last 30 days</option>
+            <option value="90">Last 90 days</option>
+          </select>
+        </label>
       </header>
+
+      {alerts.length > 0 && (
+        <section className="ops-alerts" aria-label="System alerts">
+          {alerts.map((alert) => (
+            <p key={alert.text} className={`ops-alert ops-alert--${alert.level}`}>
+              {alert.text}
+            </p>
+          ))}
+        </section>
+      )}
+
       <section className="ops-metrics">
-        <article><p>Hotels</p><strong>{summary.stays}</strong></article>
-        <article><p>Guests</p><strong>{summary.customers}</strong></article>
-        <article><p>Hotel admins</p><strong>{summary.hotelAdmins}</strong></article>
-        <article><p>Bookings</p><strong>{summary.bookings}</strong></article>
-        <article><p>Payments</p><strong>{summary.payments}</strong></article>
-        <article><p>Revenue</p><strong>${Number(summary.revenue || 0).toLocaleString()}</strong></article>
-        <article><p>Pending pay</p><strong>{summary.pendingPayments}</strong></article>
+        <article>
+          <p>Registered hotels</p>
+          <strong>{summary.stays || 0}</strong>
+          <span className="muted small">
+            {summary.publishedHotels || 0} live · {summary.suspendedHotels || 0} suspended ·{' '}
+            {summary.featuredHotels || 0} featured
+          </span>
+        </article>
+        <article>
+          <p>Bookings</p>
+          <strong>{summary.bookings || 0}</strong>
+          <span className="muted small">{summary.todaysBookings || 0} created today</span>
+        </article>
+        <article>
+          <p>Current guests</p>
+          <strong>{summary.currentGuests || 0}</strong>
+          <span className="muted small">
+            {summary.upcomingArrivals || 0} arrivals · {summary.upcomingDepartures || 0} departures (7d)
+          </span>
+        </article>
+        <article>
+          <p>Gross booking value</p>
+          <strong>{money(summary.grossBookingValue || 0)}</strong>
+          <span className="muted small">Paid revenue {money(summary.revenue || 0)}</span>
+        </article>
+        <article>
+          <p>Platform commission</p>
+          <strong>{money(summary.commissionEarned || 0)}</strong>
+          <span className="muted small">
+            {Math.round((summary.commissionRate || 0.12) * 100)}% default rate
+          </span>
+        </article>
+        <article>
+          <p>Outstanding / pending</p>
+          <strong>{summary.pendingPayments || 0}</strong>
+          <span className="muted small">
+            Refunds {summary.completedRefunds || 0} · payouts {money(summary.outstandingPayouts || 0)}
+          </span>
+        </article>
+        <article>
+          <p>Avg booking value</p>
+          <strong>{money(summary.avgBookingValue || 0)}</strong>
+          <span className="muted small">ALOS {summary.avgLengthOfStay || 0} nights</span>
+        </article>
+        <article>
+          <p>Customers</p>
+          <strong>{summary.customers || 0}</strong>
+          <span className="muted small">
+            Growth {summary.customerGrowth || 0}% · hotel admins {summary.hotelAdmins || 0}
+          </span>
+        </article>
+        <article>
+          <p>Cancel / no-show</p>
+          <strong>{summary.cancellationRate || 0}%</strong>
+          <span className="muted small">No-show {summary.noShowRate || 0}%</span>
+        </article>
+        <article>
+          <p>Support & applications</p>
+          <strong>{summary.unresolvedSupport || 0}</strong>
+          <span className="muted small">
+            Pending hotel apps {summary.pendingApplications || 0}
+          </span>
+        </article>
       </section>
+
       <section className="ops-grid">
         <div className="ops-panel">
-          <h2>Duffel Stay</h2>
-          <p>
-            Mode: <strong>{String(duffel.mode)}</strong>
-          </p>
-          <p className="muted small">
-            {duffel.configured ? 'Live token configured' : 'Mock mode — set DUFFEL_ACCESS_TOKEN for live inventory'}
-          </p>
+          <h2>Top-performing hotels</h2>
+          <ul className="ops-list ops-list--plain">
+            {topHotels.map((h) => (
+              <li key={String(h.stayId || h.stayName)}>
+                <div>
+                  <strong>{String(h.stayName || h.stayId)}</strong>
+                  <p className="muted small">
+                    {Number(h.bookings || 0)} bookings · {money(Number(h.revenue || 0))}
+                  </p>
+                </div>
+              </li>
+            ))}
+            {topHotels.length === 0 && <p className="muted">No paid hotel performance yet.</p>}
+          </ul>
         </div>
         <div className="ops-panel">
-          <h2>Recent bookings</h2>
+          <h2>Top destinations</h2>
           <ul className="ops-list ops-list--plain">
-            {recentBookings.slice(0, 6).map((b) => (
+            {topDestinations.map((d) => (
+              <li key={String(d.city)}>
+                <div>
+                  <strong>{String(d.city)}</strong>
+                  <p className="muted small">
+                    {Number(d.bookings || 0)} bookings · {money(Number(d.revenue || 0))}
+                  </p>
+                </div>
+              </li>
+            ))}
+            {topDestinations.length === 0 && <p className="muted">No destination mix yet.</p>}
+          </ul>
+        </div>
+        <div className="ops-panel">
+          <h2>Most-booked room types</h2>
+          <ul className="ops-list ops-list--plain">
+            {topRoomTypes.map((r) => (
+              <li key={String(r.name)}>
+                <div>
+                  <strong>{String(r.name)}</strong>
+                  <p className="muted small">{Number(r.count || 0)} bookings</p>
+                </div>
+              </li>
+            ))}
+            {topRoomTypes.length === 0 && <p className="muted">No room-type mix yet.</p>}
+          </ul>
+        </div>
+        <div className="ops-panel">
+          <h2>Booking sources</h2>
+          <ul className="ops-list ops-list--plain">
+            {bookingSources.map((s) => (
+              <li key={String(s.source)}>
+                <div>
+                  <strong>{String(s.source)}</strong>
+                  <p className="muted small">{Number(s.count || 0)} bookings</p>
+                </div>
+              </li>
+            ))}
+            {bookingSources.length === 0 && <p className="muted">No attribution data yet.</p>}
+          </ul>
+          <p className="muted small" style={{ marginTop: '0.75rem' }}>
+            Duffel Stay · {String(duffel.mode || 'mock')}
+            {duffel.configured ? ' · live token' : ' · mock inventory'}
+          </p>
+        </div>
+      </section>
+
+      <section className="ops-grid">
+        <div className="ops-panel">
+          <h2>Recent reservations</h2>
+          <ul className="ops-list ops-list--plain">
+            {recentBookings.slice(0, 8).map((b) => (
               <li key={String(b.id)}>
                 <div>
                   <strong>{String(b.guestName || b.bookingRef)}</strong>
                   <p className="muted small">
-                    {String(b.stayName)} · {String(b.status)} · ${Number(b.total || 0)}
+                    {String(b.stayName)} · {String(b.status)} · {money(Number(b.total || 0))}
                   </p>
                 </div>
               </li>
@@ -69,17 +229,35 @@ export function AdminDashboardPage() {
         <div className="ops-panel">
           <h2>Recent payments</h2>
           <ul className="ops-list ops-list--plain">
-            {recentPayments.slice(0, 6).map((p) => (
+            {recentPayments.slice(0, 8).map((p) => (
               <li key={String(p.id)}>
                 <div>
                   <strong>{String(p.gateway)}</strong>
                   <p className="muted small">
-                    {String(p.status)} · ${Number(p.amount || 0)} · {String(p.providerRef)}
+                    {String(p.status)} · {money(Number(p.amount || 0))} · {String(p.providerRef || '')}
                   </p>
                 </div>
               </li>
             ))}
             {recentPayments.length === 0 && <p className="muted">No payments yet.</p>}
+          </ul>
+        </div>
+        <div className="ops-panel">
+          <h2>Audit trail</h2>
+          <ul className="ops-list ops-list--plain">
+            {audit.slice(0, 8).map((row) => (
+              <li key={String(row.id || `${row.action}-${row.createdAt}`)}>
+                <div>
+                  <strong>
+                    {String(row.action)} · {String(row.entity)}
+                  </strong>
+                  <p className="muted small">
+                    {String(row.entityId || '')} · {String(row.createdAt || '').slice(0, 19).replace('T', ' ')}
+                  </p>
+                </div>
+              </li>
+            ))}
+            {audit.length === 0 && <p className="muted">No audit events yet.</p>}
           </ul>
         </div>
       </section>
@@ -89,10 +267,14 @@ export function AdminDashboardPage() {
 
 export function AdminHotelsPage() {
   const [stays, setStays] = useState<ApiStay[]>([])
+  const [query, setQuery] = useState('')
+  const [status, setStatus] = useState('all')
   const [message, setMessage] = useState<string | null>(null)
+  const [editing, setEditing] = useState<ApiStay | null>(null)
+  const [notes, setNotes] = useState('')
 
   async function load() {
-    const data = await api.listStays()
+    const data = await api.adminStays()
     setStays(data.stays)
   }
 
@@ -100,9 +282,29 @@ export function AdminHotelsPage() {
     void load()
   }, [])
 
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    return stays.filter((stay) => {
+      const stayStatus = stay.status || 'published'
+      if (status !== 'all' && stayStatus !== status) return false
+      if (!q) return true
+      return [stay.name, stay.city, stay.country, stay.typeLabel, stay.neighborhood]
+        .join(' ')
+        .toLowerCase()
+        .includes(q)
+    })
+  }, [stays, query, status])
+
+  async function patchStay(id: string, payload: Record<string, unknown>, toast: string) {
+    await api.updateAdminStay(id, payload)
+    setMessage(toast)
+    await load()
+  }
+
   async function archive(id: string) {
     await api.archiveStay(id)
     setMessage('Hotel archived')
+    setEditing(null)
     await load()
   }
 
@@ -110,26 +312,168 @@ export function AdminHotelsPage() {
     <div className="ops-page">
       <header className="ops-header">
         <div>
-          <p className="ops-kicker">Inventory</p>
+          <p className="ops-kicker">Hotel & property management</p>
           <h1>Hotels</h1>
-          <p className="muted">Publish, feature, and archive properties across the network.</p>
+          <p className="muted">Search, feature, suspend, note, and archive properties across the network.</p>
         </div>
       </header>
       {message && <p className="ops-toast">{message}</p>}
+
+      <div className="ops-toolbar">
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search name, city, country…"
+          aria-label="Search hotels"
+        />
+        <select value={status} onChange={(e) => setStatus(e.target.value)} aria-label="Filter status">
+          <option value="all">All statuses</option>
+          <option value="published">Published</option>
+          <option value="suspended">Suspended</option>
+          <option value="pending">Pending</option>
+          <option value="archived">Archived</option>
+        </select>
+        <p className="muted small">{filtered.length} properties</p>
+      </div>
+
       <div className="ops-panel">
         <ul className="ops-list">
-          {stays.map((stay) => (
+          {filtered.map((stay) => (
             <li key={stay.id}>
               <img src={stay.image} alt="" />
               <div>
-                <strong>{stay.name}</strong>
+                <strong>
+                  {stay.name}
+                  {stay.featured ? ' · Featured' : ''}
+                </strong>
                 <p className="muted small">
-                  {stay.city}, {stay.country} · ${stay.nightlyFrom}/night · {stay.status || 'published'}
+                  {stay.city}, {stay.country} · ${stay.nightlyFrom}/night · {stay.status || 'published'} ·{' '}
+                  {stay.typeLabel}
                 </p>
               </div>
-              <button type="button" className="btn btn--ghost" onClick={() => void archive(stay.id)}>
-                Archive
-              </button>
+              <div className="ops-list__actions">
+                <button
+                  type="button"
+                  className="btn btn--ghost"
+                  onClick={() => {
+                    setEditing(stay)
+                    setNotes(String(stay.internalNotes || ''))
+                  }}
+                >
+                  Manage
+                </button>
+                <button
+                  type="button"
+                  className="btn btn--ghost"
+                  onClick={() =>
+                    void patchStay(stay.id, { featured: !stay.featured }, stay.featured ? 'Unfeatured' : 'Featured')
+                  }
+                >
+                  {stay.featured ? 'Unfeature' : 'Feature'}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn--ghost"
+                  onClick={() =>
+                    void patchStay(
+                      stay.id,
+                      {
+                        status: (stay.status || 'published') === 'suspended' ? 'published' : 'suspended',
+                      },
+                      (stay.status || 'published') === 'suspended' ? 'Reactivated' : 'Suspended',
+                    )
+                  }
+                >
+                  {(stay.status || 'published') === 'suspended' ? 'Activate' : 'Suspend'}
+                </button>
+              </div>
+            </li>
+          ))}
+          {filtered.length === 0 && <p className="muted">No hotels match these filters.</p>}
+        </ul>
+      </div>
+
+      {editing && (
+        <div className="ops-panel" style={{ marginTop: '1rem' }}>
+          <h2>Manage · {editing.name}</h2>
+          <p className="muted small">
+            {editing.city}, {editing.country} · visibility in search follows published status
+          </p>
+          <label>
+            Internal notes
+            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={4} />
+          </label>
+          <div className="ops-list__actions" style={{ marginTop: '0.75rem' }}>
+            <button
+              type="button"
+              className="btn btn--gold"
+              onClick={() =>
+                void patchStay(editing.id, { internalNotes: notes }, 'Notes saved').then(() => setEditing(null))
+              }
+            >
+              Save notes
+            </button>
+            <button
+              type="button"
+              className="btn btn--ghost"
+              onClick={() => void patchStay(editing.id, { status: 'published' }, 'Published')}
+            >
+              Publish
+            </button>
+            <button type="button" className="btn btn--ghost" onClick={() => void archive(editing.id)}>
+              Archive
+            </button>
+            <button type="button" className="btn btn--ghost" onClick={() => setEditing(null)}>
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+export function AdminModulesPage() {
+  const modules = [
+    { name: '1. Executive Dashboard', status: 'Live', note: 'KPIs, alerts, tops, audit feed' },
+    { name: '2. Hotel & Property Management', status: 'Live', note: 'Search, feature, suspend, notes, archive' },
+    { name: '3. Hotel Onboarding & Approval', status: 'Next', note: 'Applications queue & document review' },
+    { name: '4. Hotel User & Staff Management', status: 'Partial', note: 'Invite/suspend staff live; roles matrix next' },
+    { name: '5. Customer Management', status: 'Partial', note: 'Directory live; CRM profile next' },
+    { name: '6. Reservation Management', status: 'Partial', note: 'Network bookings list live' },
+    { name: '7. Inventory & Availability', status: 'Planned', note: 'Calendars, holds, overbooking rules' },
+    { name: '8. Rates & Pricing Oversight', status: 'Planned', note: 'Rate plans and anomaly detection' },
+    { name: '9. Commission Management', status: 'Next', note: 'Default rate already feeds dashboard' },
+    { name: '10. Payment Management', status: 'Partial', note: 'Ledger + gateways live' },
+    { name: '11–13. Refunds, Payouts, Ledger', status: 'Planned', note: 'Finance suite' },
+    { name: '14–15. Promotions & Advertising', status: 'Planned', note: 'Campaigns and featured placements' },
+    { name: '16–20. Reviews, CMS, Destinations', status: 'Planned', note: 'Content & taxonomy' },
+    { name: '21–23. Support, Fraud, Comms', status: 'Planned', note: 'Ops case management' },
+    { name: '24–27. i18n, Tax, Loyalty, Reports', status: 'Planned', note: 'Growth & compliance analytics' },
+    { name: '28–29. Roles, Audit & Compliance', status: 'Partial', note: 'Hard roles + audit feed live' },
+  ]
+
+  return (
+    <div className="ops-page">
+      <header className="ops-header">
+        <div>
+          <p className="ops-kicker">Platform roadmap</p>
+          <h1>Module map</h1>
+          <p className="muted">
+            Your Multi-Hotel Platform Admin blueprint — shipped pieces first, then finance, onboarding, and
+            content modules.
+          </p>
+        </div>
+      </header>
+      <div className="ops-panel">
+        <ul className="ops-module-list">
+          {modules.map((mod) => (
+            <li key={mod.name}>
+              <div>
+                <strong>{mod.name}</strong>
+                <p className="muted small">{mod.note}</p>
+              </div>
+              <span className={`ops-pill ops-pill--${mod.status.toLowerCase()}`}>{mod.status}</span>
             </li>
           ))}
         </ul>
