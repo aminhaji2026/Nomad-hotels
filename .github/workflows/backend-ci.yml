@@ -1,0 +1,50 @@
+name: Backend CI
+
+on:
+  push:
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yml'
+  pull_request:
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yml'
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: nomadstay
+          POSTGRES_PASSWORD: nomadstay
+          POSTGRES_DB: nomadstay
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U nomadstay"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://nomadstay:nomadstay@127.0.0.1:5432/nomadstay?schema=public
+      JWT_ACCESS_SECRET: ci-access-secret-change-me-in-production-min-32
+      JWT_REFRESH_SECRET: ci-refresh-secret-change-me-in-production-min-32
+      NODE_ENV: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npx prisma migrate deploy
+      - run: npm run lint
+      - run: npm run build
+      - run: npm test -- --passWithNoTests

@@ -1,0 +1,1276 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ═══════════════════════════════════════════════════════════
+// Enums
+// ═══════════════════════════════════════════════════════════
+
+enum UserStatus {
+  ACTIVE
+  PENDING_VERIFICATION
+  SUSPENDED
+  DELETED
+}
+
+enum AuthProvider {
+  LOCAL
+  PHONE
+  EMAIL_OTP
+}
+
+enum OtpPurpose {
+  LOGIN
+  REGISTER
+  VERIFY_EMAIL
+  VERIFY_PHONE
+  RESET_PASSWORD
+  TWO_FACTOR
+}
+
+enum ScopeType {
+  PLATFORM
+  HOTEL_GROUP
+  PROPERTY
+}
+
+enum ApplicationStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  CHANGES_REQUESTED
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum PropertyStatus {
+  DRAFT
+  PENDING_APPROVAL
+  ACTIVE
+  HIDDEN
+  SUSPENDED
+  CLOSED
+}
+
+enum PropertyType {
+  HOTEL
+  RESORT
+  APARTMENT
+  GUEST_HOUSE
+  VILLA
+  HOSTEL
+  BOUTIQUE
+  OTHER
+}
+
+enum MediaCategory {
+  EXTERIOR
+  LOBBY
+  ROOM
+  BATHROOM
+  AMENITY
+  DINING
+  VIEW
+  OTHER
+  DOCUMENT
+  ID
+  LICENSE
+  CONTRACT
+}
+
+enum RoomStatus {
+  AVAILABLE
+  OCCUPIED
+  DIRTY
+  CLEAN
+  INSPECTED
+  OUT_OF_ORDER
+  OUT_OF_SERVICE
+  MAINTENANCE
+}
+
+enum SmokingPolicy {
+  NON_SMOKING
+  SMOKING
+  MIXED
+}
+
+enum RatePlanType {
+  STANDARD
+  REFUNDABLE
+  NON_REFUNDABLE
+  BNB
+  HALF_BOARD
+  FULL_BOARD
+  ROOM_ONLY
+  CORPORATE
+  PACKAGE
+  MOBILE_ONLY
+  MEMBER_ONLY
+  PROMOTIONAL
+}
+
+enum InventoryState {
+  OPEN
+  STOP_SELL
+  CLOSED_TO_ARRIVAL
+  CLOSED_TO_DEPARTURE
+}
+
+enum HoldStatus {
+  ACTIVE
+  CONSUMED
+  EXPIRED
+  RELEASED
+}
+
+enum ReservationStatus {
+  PENDING_PAYMENT
+  PAYMENT_PROCESSING
+  CONFIRMED
+  MODIFIED
+  CANCELLED
+  CHECKED_IN
+  CHECKED_OUT
+  NO_SHOW
+  PAYMENT_FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum PaymentStatus {
+  PENDING
+  AUTHORIZED
+  CAPTURED
+  FAILED
+  CANCELLED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum PaymentMethodType {
+  CARD
+  PAY_AT_PROPERTY
+  CASH
+  BANK_TRANSFER
+  MOBILE_MONEY
+  OTHER
+}
+
+enum PayoutStatus {
+  SCHEDULED
+  PROCESSING
+  PAID
+  ON_HOLD
+  FAILED
+}
+
+enum ReviewStatus {
+  PENDING
+  PUBLISHED
+  REJECTED
+  HIDDEN
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  WAITING_CUSTOMER
+  ESCALATED
+  RESOLVED
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum HousekeepingTaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  INSPECTED
+  CANCELLED
+}
+
+enum MaintenancePriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum MaintenanceStatus {
+  OPEN
+  ASSIGNED
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum NotificationChannel {
+  EMAIL
+  SMS
+  PUSH
+  IN_APP
+}
+
+enum NotificationStatus {
+  QUEUED
+  SENT
+  DELIVERED
+  FAILED
+  CANCELLED
+}
+
+enum LocaleCode {
+  en
+  so
+  ar
+}
+
+// ═══════════════════════════════════════════════════════════
+// Identity & security
+// ═══════════════════════════════════════════════════════════
+
+model User {
+  id              String       @id @default(uuid()) @db.Uuid
+  email           String?      @unique
+  phone           String?      @unique
+  emailVerifiedAt DateTime?
+  phoneVerifiedAt DateTime?
+  passwordHash    String?
+  firstName       String
+  lastName        String
+  displayName     String?
+  locale          LocaleCode   @default(en)
+  status          UserStatus   @default(PENDING_VERIFICATION)
+  twoFactorSecret String?
+  twoFactorEnabled Boolean     @default(false)
+  lastLoginAt     DateTime?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  deletedAt       DateTime?
+
+  customerProfile   CustomerProfile?
+  memberships       StaffMembership[]
+  refreshSessions   RefreshSession[]
+  loginAttempts     LoginAttempt[]
+  otpChallenges     OtpChallenge[]
+  auditLogs         AuditLog[]            @relation("AuditActor")
+  applications      PropertyApplication[] @relation("ApplicationOwner")
+  reviewedApps      ApplicationStatusHistory[] @relation("ApplicationReviewer")
+  uploadedFiles     MediaAsset[]
+  reservations      Reservation[]         @relation("ReservationCustomer")
+  messagesSent      Message[]             @relation("MessageSender")
+  supportTickets    SupportTicket[]       @relation("TicketRequester")
+  assignedTickets   SupportTicket[]       @relation("TicketAssignee")
+  reviews           Review[]
+  notifications     Notification[]
+  savedProperties   SavedProperty[]
+  recentlyViewed    RecentlyViewedProperty[]
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model CustomerProfile {
+  id            String    @id @default(uuid()) @db.Uuid
+  userId        String    @unique @db.Uuid
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  nationality   String?
+  dateOfBirth   DateTime? @db.Date
+  addressLine1  String?
+  addressLine2  String?
+  city          String?
+  countryCode   String?   @db.Char(2)
+  postalCode    String?
+  loyaltyPoints Int       @default(0)
+  referralCode  String    @unique
+  referredById  String?   @db.Uuid
+  metadata      Json?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model RefreshSession {
+  id               String    @id @default(uuid()) @db.Uuid
+  userId           String    @db.Uuid
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash        String    @unique
+  deviceName       String?
+  userAgent        String?
+  ipAddress        String?
+  expiresAt        DateTime
+  revokedAt        DateTime?
+  replacedById     String?   @db.Uuid
+  createdAt        DateTime  @default(now())
+
+  @@index([userId, revokedAt])
+  @@index([expiresAt])
+}
+
+model LoginAttempt {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String?  @db.Uuid
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  identifier String
+  success    Boolean
+  ipAddress  String?
+  userAgent  String?
+  reason     String?
+  createdAt  DateTime @default(now())
+
+  @@index([identifier, createdAt])
+}
+
+model OtpChallenge {
+  id         String     @id @default(uuid()) @db.Uuid
+  userId     String?    @db.Uuid
+  user       User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  destination String
+  purpose    OtpPurpose
+  codeHash   String
+  attempts   Int        @default(0)
+  maxAttempts Int       @default(5)
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime   @default(now())
+
+  @@index([destination, purpose, createdAt])
+}
+
+model Role {
+  id          String           @id @default(uuid()) @db.Uuid
+  code        String           @unique
+  name        String
+  description String?
+  scopeType   ScopeType
+  isSystem    Boolean          @default(true)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  permissions RolePermission[]
+  memberships StaffMembership[]
+}
+
+model Permission {
+  id          String           @id @default(uuid()) @db.Uuid
+  code        String           @unique
+  name        String
+  description String?
+  createdAt   DateTime         @default(now())
+  roles       RolePermission[]
+}
+
+model RolePermission {
+  roleId       String     @db.Uuid
+  permissionId String     @db.Uuid
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+}
+
+model StaffMembership {
+  id            String     @id @default(uuid()) @db.Uuid
+  userId        String     @db.Uuid
+  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roleId        String     @db.Uuid
+  role          Role       @relation(fields: [roleId], references: [id])
+  hotelGroupId  String?    @db.Uuid
+  hotelGroup    HotelGroup? @relation(fields: [hotelGroupId], references: [id], onDelete: Cascade)
+  propertyId    String?    @db.Uuid
+  property      Property?  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  customPermissions String[] @default([])
+  isActive      Boolean    @default(true)
+  invitedById   String?    @db.Uuid
+  invitedAt     DateTime?
+  acceptedAt    DateTime?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  @@unique([userId, roleId, hotelGroupId, propertyId])
+  @@index([propertyId, isActive])
+  @@index([hotelGroupId, isActive])
+}
+
+model StaffInvitation {
+  id           String    @id @default(uuid()) @db.Uuid
+  email        String
+  roleId       String    @db.Uuid
+  hotelGroupId String?   @db.Uuid
+  propertyId   String?   @db.Uuid
+  tokenHash    String    @unique
+  invitedById  String    @db.Uuid
+  expiresAt    DateTime
+  acceptedAt   DateTime?
+  revokedAt    DateTime?
+  createdAt    DateTime  @default(now())
+
+  @@index([email])
+}
+
+// ═══════════════════════════════════════════════════════════
+// Hotel hierarchy & content
+// ═══════════════════════════════════════════════════════════
+
+model HotelGroup {
+  id          String     @id @default(uuid()) @db.Uuid
+  name        String
+  legalName   String?
+  slug        String     @unique
+  description String?
+  countryCode String?    @db.Char(2)
+  status      PropertyStatus @default(DRAFT)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  deletedAt   DateTime?
+
+  properties   Property[]
+  memberships  StaffMembership[]
+  applications PropertyApplication[]
+}
+
+model Property {
+  id              String         @id @default(uuid()) @db.Uuid
+  hotelGroupId    String         @db.Uuid
+  hotelGroup      HotelGroup     @relation(fields: [hotelGroupId], references: [id])
+  name            String
+  slug            String         @unique
+  propertyType    PropertyType   @default(HOTEL)
+  starRating      Int?
+  status          PropertyStatus @default(DRAFT)
+  timezone        String         @default("UTC")
+  currency        String         @db.Char(3) @default("USD")
+  checkInFrom     String         @default("14:00")
+  checkOutUntil   String         @default("11:00")
+  starCategory    Int?
+  email           String?
+  phone           String?
+  website         String?
+  addressLine1    String?
+  addressLine2    String?
+  city            String?
+  state           String?
+  postalCode      String?
+  countryCode     String?        @db.Char(2)
+  latitude        Decimal?       @db.Decimal(10, 7)
+  longitude       Decimal?       @db.Decimal(10, 7)
+  commissionRate  Decimal        @default(15) @db.Decimal(5, 2)
+  isFeatured      Boolean        @default(false)
+  publishedAt     DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  deletedAt       DateTime?
+
+  translations PropertyTranslation[]
+  amenities    PropertyAmenity[]
+  policies     PropertyPolicy?
+  media        MediaAsset[]
+  buildings    Building[]
+  roomTypes    RoomType[]
+  rooms        PhysicalRoom[]
+  memberships  StaffMembership[]
+  ratePlans    RatePlan[]
+  inventory    InventoryDay[]
+  reservations Reservation[]
+  reviews      Review[]
+  application  PropertyApplication?
+  temporaryClosures TemporaryClosure[]
+
+  @@index([status, city, countryCode])
+  @@index([latitude, longitude])
+  @@index([hotelGroupId])
+}
+
+model PropertyTranslation {
+  id               String     @id @default(uuid()) @db.Uuid
+  propertyId       String     @db.Uuid
+  property         Property   @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  locale           LocaleCode
+  name             String?
+  shortDescription String?
+  description      String?
+  houseRules       String?
+  checkInInstructions String?
+
+  @@unique([propertyId, locale])
+}
+
+model Amenity {
+  id        String   @id @default(uuid()) @db.Uuid
+  code      String   @unique
+  name      String
+  category  String?
+  icon      String?
+  createdAt DateTime @default(now())
+  properties PropertyAmenity[]
+  roomTypes  RoomTypeAmenity[]
+}
+
+model PropertyAmenity {
+  propertyId String   @db.Uuid
+  amenityId  String   @db.Uuid
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  amenity    Amenity  @relation(fields: [amenityId], references: [id], onDelete: Cascade)
+
+  @@id([propertyId, amenityId])
+}
+
+model PropertyPolicy {
+  id                    String   @id @default(uuid()) @db.Uuid
+  propertyId            String   @unique @db.Uuid
+  property              Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  cancellationPolicy    Json?
+  prepaymentPolicy      Json?
+  childPolicy           Json?
+  extraBedPolicy        Json?
+  petPolicy             Json?
+  smokingPolicy         SmokingPolicy @default(NON_SMOKING)
+  taxSettings           Json?
+  accessibilityInfo     String?
+  sustainabilityInfo    String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+model TemporaryClosure {
+  id         String   @id @default(uuid()) @db.Uuid
+  propertyId String   @db.Uuid
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  startDate  DateTime @db.Date
+  endDate    DateTime @db.Date
+  reason     String?
+  createdAt  DateTime @default(now())
+
+  @@index([propertyId, startDate, endDate])
+}
+
+model Building {
+  id         String   @id @default(uuid()) @db.Uuid
+  propertyId String   @db.Uuid
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  name       String
+  code       String?
+  createdAt  DateTime @default(now())
+  floors     Floor[]
+  rooms      PhysicalRoom[]
+
+  @@unique([propertyId, name])
+}
+
+model Floor {
+  id         String    @id @default(uuid()) @db.Uuid
+  buildingId String    @db.Uuid
+  building   Building  @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+  name       String
+  level      Int
+  createdAt  DateTime  @default(now())
+  rooms      PhysicalRoom[]
+
+  @@unique([buildingId, level])
+}
+
+model RoomType {
+  id              String      @id @default(uuid()) @db.Uuid
+  propertyId      String      @db.Uuid
+  property        Property    @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  code            String
+  name            String
+  description     String?
+  sizeSqm         Decimal?    @db.Decimal(8, 2)
+  maxAdults       Int         @default(2)
+  maxChildren     Int         @default(0)
+  maxOccupancy    Int         @default(2)
+  baseOccupancy   Int         @default(2)
+  extraBeds       Int         @default(0)
+  cotsAllowed     Boolean     @default(false)
+  smoking         SmokingPolicy @default(NON_SMOKING)
+  bathroomType    String?
+  viewType        String?
+  accessibility   String?
+  sellableUnits   Int         @default(0)
+  isActive        Boolean     @default(true)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  deletedAt       DateTime?
+
+  beds         BedConfiguration[]
+  amenities    RoomTypeAmenity[]
+  media        MediaAsset[]
+  rooms        PhysicalRoom[]
+  ratePlans    RatePlan[]
+  inventory    InventoryDay[]
+  translations RoomTypeTranslation[]
+
+  @@unique([propertyId, code])
+  @@index([propertyId, isActive])
+}
+
+model RoomTypeTranslation {
+  id          String     @id @default(uuid()) @db.Uuid
+  roomTypeId  String     @db.Uuid
+  roomType    RoomType   @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+  locale      LocaleCode
+  name        String?
+  description String?
+
+  @@unique([roomTypeId, locale])
+}
+
+model BedConfiguration {
+  id         String   @id @default(uuid()) @db.Uuid
+  roomTypeId String   @db.Uuid
+  roomType   RoomType @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+  bedType    String
+  count      Int      @default(1)
+}
+
+model RoomTypeAmenity {
+  roomTypeId String   @db.Uuid
+  amenityId  String   @db.Uuid
+  roomType   RoomType @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+  amenity    Amenity  @relation(fields: [amenityId], references: [id], onDelete: Cascade)
+
+  @@id([roomTypeId, amenityId])
+}
+
+model PhysicalRoom {
+  id              String     @id @default(uuid()) @db.Uuid
+  propertyId      String     @db.Uuid
+  property        Property   @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  roomTypeId      String     @db.Uuid
+  roomType        RoomType   @relation(fields: [roomTypeId], references: [id])
+  buildingId      String?    @db.Uuid
+  building        Building?  @relation(fields: [buildingId], references: [id])
+  floorId         String?    @db.Uuid
+  floor           Floor?     @relation(fields: [floorId], references: [id])
+  roomNumber      String
+  status          RoomStatus @default(AVAILABLE)
+  connectingRoomId String?   @db.Uuid
+  connectingRoom  PhysicalRoom?  @relation("ConnectingRooms", fields: [connectingRoomId], references: [id])
+  connectedFrom   PhysicalRoom[] @relation("ConnectingRooms")
+  notes           String?
+  isActive        Boolean    @default(true)
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  deletedAt       DateTime?
+
+  housekeepingTasks HousekeepingTask[]
+  maintenanceTickets MaintenanceTicket[]
+  reservationRooms  ReservationRoom[]
+
+  @@unique([propertyId, roomNumber])
+  @@index([roomTypeId, status])
+}
+
+model MediaAsset {
+  id           String        @id @default(uuid()) @db.Uuid
+  uploaderId   String?       @db.Uuid
+  uploader     User?         @relation(fields: [uploaderId], references: [id], onDelete: SetNull)
+  propertyId   String?       @db.Uuid
+  property     Property?     @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  roomTypeId   String?       @db.Uuid
+  roomType     RoomType?     @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+  applicationId String?      @db.Uuid
+  application  PropertyApplication? @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  category     MediaCategory @default(OTHER)
+  url          String
+  key          String?
+  mimeType     String?
+  sizeBytes    Int?
+  caption      String?
+  sortOrder    Int           @default(0)
+  isPrimary    Boolean       @default(false)
+  createdAt    DateTime      @default(now())
+
+  @@index([propertyId, category])
+}
+
+// ═══════════════════════════════════════════════════════════
+// Onboarding
+// ═══════════════════════════════════════════════════════════
+
+model PropertyApplication {
+  id                 String            @id @default(uuid()) @db.Uuid
+  ownerUserId        String            @db.Uuid
+  ownerUser          User              @relation("ApplicationOwner", fields: [ownerUserId], references: [id])
+  hotelGroupId       String?           @db.Uuid
+  hotelGroup         HotelGroup?       @relation(fields: [hotelGroupId], references: [id])
+  propertyId         String?           @unique @db.Uuid
+  property           Property?         @relation(fields: [propertyId], references: [id])
+  status             ApplicationStatus @default(DRAFT)
+  legalBusinessName  String
+  tradingName        String?
+  registrationNumber String?
+  taxId              String?
+  ownerName          String
+  ownerEmail         String
+  ownerPhone         String?
+  representativeName String?
+  representativeEmail String?
+  propertyName       String
+  propertyType       PropertyType      @default(HOTEL)
+  starCategory       Int?
+  addressLine1       String?
+  city               String?
+  countryCode        String?           @db.Char(2)
+  latitude           Decimal?          @db.Decimal(10, 7)
+  longitude          Decimal?          @db.Decimal(10, 7)
+  contactEmail       String?
+  contactPhone       String?
+  amenities          Json?
+  checkInFrom        String?
+  checkOutUntil      String?
+  houseRules         String?
+  policies           Json?
+  bankDetailsEnc     String?
+  contractAcceptedAt DateTime?
+  commissionRate     Decimal?          @db.Decimal(5, 2)
+  checklist          Json?
+  submittedAt        DateTime?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  documents MediaAsset[]
+  history   ApplicationStatusHistory[]
+
+  @@index([status, submittedAt])
+  @@index([ownerUserId])
+}
+
+model ApplicationStatusHistory {
+  id            String            @id @default(uuid()) @db.Uuid
+  applicationId String            @db.Uuid
+  application   PropertyApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  fromStatus    ApplicationStatus?
+  toStatus      ApplicationStatus
+  reviewerId    String?           @db.Uuid
+  reviewer      User?             @relation("ApplicationReviewer", fields: [reviewerId], references: [id])
+  notes         String?
+  createdAt     DateTime          @default(now())
+
+  @@index([applicationId, createdAt])
+}
+
+// ═══════════════════════════════════════════════════════════
+// Rates & inventory (Phase 2 ready)
+// ═══════════════════════════════════════════════════════════
+
+model RatePlan {
+  id              String       @id @default(uuid()) @db.Uuid
+  propertyId      String       @db.Uuid
+  property        Property     @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  roomTypeId      String       @db.Uuid
+  roomType        RoomType     @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+  code            String
+  name            String
+  type            RatePlanType @default(STANDARD)
+  currency        String       @db.Char(3) @default("USD")
+  basePrice       Decimal      @db.Decimal(12, 2)
+  parentPlanId    String?      @db.Uuid
+  parentPlan      RatePlan?    @relation("DerivedPlans", fields: [parentPlanId], references: [id])
+  derivedPlans    RatePlan[]   @relation("DerivedPlans")
+  derivePercent   Decimal?     @db.Decimal(8, 2)
+  minStay         Int?
+  maxStay         Int?
+  isRefundable    Boolean      @default(true)
+  cancellationJson Json?
+  isActive        Boolean      @default(true)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  dailyRates   DailyRate[]
+  restrictions RateRestriction[]
+
+  @@unique([propertyId, code])
+}
+
+model DailyRate {
+  id         String   @id @default(uuid()) @db.Uuid
+  ratePlanId String   @db.Uuid
+  ratePlan   RatePlan @relation(fields: [ratePlanId], references: [id], onDelete: Cascade)
+  date       DateTime @db.Date
+  price      Decimal  @db.Decimal(12, 2)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([ratePlanId, date])
+  @@index([date])
+}
+
+model RateRestriction {
+  id           String   @id @default(uuid()) @db.Uuid
+  ratePlanId   String   @db.Uuid
+  ratePlan     RatePlan @relation(fields: [ratePlanId], references: [id], onDelete: Cascade)
+  startDate    DateTime @db.Date
+  endDate      DateTime @db.Date
+  minStay      Int?
+  maxStay      Int?
+  closedToArrival Boolean @default(false)
+  closedToDeparture Boolean @default(false)
+  stopSell     Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  @@index([ratePlanId, startDate, endDate])
+}
+
+model InventoryDay {
+  id            String         @id @default(uuid()) @db.Uuid
+  propertyId    String         @db.Uuid
+  property      Property       @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  roomTypeId    String         @db.Uuid
+  roomType      RoomType       @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+  date          DateTime       @db.Date
+  total         Int
+  available     Int
+  reserved      Int            @default(0)
+  blocked       Int            @default(0)
+  sold          Int            @default(0)
+  overbookLimit Int            @default(0)
+  state         InventoryState @default(OPEN)
+  updatedAt     DateTime       @updatedAt
+  createdAt     DateTime       @default(now())
+
+  holds InventoryHold[]
+
+  @@unique([roomTypeId, date])
+  @@index([propertyId, date])
+}
+
+model InventoryHold {
+  id             String     @id @default(uuid()) @db.Uuid
+  inventoryDayId String     @db.Uuid
+  inventoryDay   InventoryDay @relation(fields: [inventoryDayId], references: [id], onDelete: Cascade)
+  reservationId  String?    @db.Uuid
+  quantity       Int
+  status         HoldStatus @default(ACTIVE)
+  expiresAt      DateTime
+  createdAt      DateTime   @default(now())
+
+  @@index([status, expiresAt])
+}
+
+model InventoryAdjustment {
+  id         String   @id @default(uuid()) @db.Uuid
+  roomTypeId String   @db.Uuid
+  date       DateTime @db.Date
+  delta      Int
+  reason     String?
+  actorId    String?  @db.Uuid
+  createdAt  DateTime @default(now())
+
+  @@index([roomTypeId, date])
+}
+
+// ═══════════════════════════════════════════════════════════
+// Reservations & guests
+// ═══════════════════════════════════════════════════════════
+
+model Reservation {
+  id                 String            @id @default(uuid()) @db.Uuid
+  confirmationNumber String            @unique
+  propertyId         String            @db.Uuid
+  property           Property          @relation(fields: [propertyId], references: [id])
+  customerId         String?           @db.Uuid
+  customer           User?             @relation("ReservationCustomer", fields: [customerId], references: [id])
+  status             ReservationStatus @default(PENDING_PAYMENT)
+  checkIn            DateTime          @db.Date
+  checkOut           DateTime          @db.Date
+  adults             Int
+  children           Int               @default(0)
+  childrenAges       Int[]             @default([])
+  roomsCount         Int               @default(1)
+  currency           String            @db.Char(3)
+  subtotal           Decimal           @db.Decimal(12, 2)
+  taxes              Decimal           @db.Decimal(12, 2) @default(0)
+  fees               Decimal           @db.Decimal(12, 2) @default(0)
+  discounts          Decimal           @db.Decimal(12, 2) @default(0)
+  total              Decimal           @db.Decimal(12, 2)
+  commissionAmount   Decimal           @db.Decimal(12, 2) @default(0)
+  paymentStatus      PaymentStatus     @default(PENDING)
+  payoutStatus       PayoutStatus?
+  source             String            @default("web")
+  specialRequests    String?
+  internalNotes      String?
+  supportNotes       String?
+  policySnapshot     Json?
+  cancellationSnapshot Json?
+  idempotencyKey     String?           @unique
+  createdById        String?           @db.Uuid
+  cancelledAt        DateTime?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  rooms      ReservationRoom[]
+  guests     ReservationGuest[]
+  nights     NightlyPrice[]
+  statusHistory ReservationStatusHistory[]
+  payments   Payment[]
+  messages   Message[]
+  review     Review?
+
+  @@index([propertyId, checkIn, checkOut])
+  @@index([customerId])
+  @@index([status])
+}
+
+model ReservationRoom {
+  id             String       @id @default(uuid()) @db.Uuid
+  reservationId  String       @db.Uuid
+  reservation    Reservation  @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  roomTypeId     String       @db.Uuid
+  physicalRoomId String?      @db.Uuid
+  physicalRoom   PhysicalRoom? @relation(fields: [physicalRoomId], references: [id])
+  ratePlanId     String?      @db.Uuid
+  adults         Int
+  children       Int          @default(0)
+
+  @@index([reservationId])
+}
+
+model ReservationGuest {
+  id            String      @id @default(uuid()) @db.Uuid
+  reservationId String      @db.Uuid
+  reservation   Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  firstName     String
+  lastName      String
+  email         String?
+  phone         String?
+  isPrimary     Boolean     @default(false)
+  idType        String?
+  idNumberEnc   String?
+  nationality   String?
+}
+
+model NightlyPrice {
+  id            String      @id @default(uuid()) @db.Uuid
+  reservationId String      @db.Uuid
+  reservation   Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  date          DateTime    @db.Date
+  roomTypeId    String      @db.Uuid
+  amount        Decimal     @db.Decimal(12, 2)
+  taxAmount     Decimal     @db.Decimal(12, 2) @default(0)
+}
+
+model ReservationStatusHistory {
+  id            String            @id @default(uuid()) @db.Uuid
+  reservationId String            @db.Uuid
+  reservation   Reservation       @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  fromStatus    ReservationStatus?
+  toStatus      ReservationStatus
+  actorId       String?           @db.Uuid
+  note          String?
+  createdAt     DateTime          @default(now())
+}
+
+// ═══════════════════════════════════════════════════════════
+// Payments & finance
+// ═══════════════════════════════════════════════════════════
+
+model Payment {
+  id             String            @id @default(uuid()) @db.Uuid
+  reservationId  String            @db.Uuid
+  reservation    Reservation       @relation(fields: [reservationId], references: [id])
+  amount         Decimal           @db.Decimal(12, 2)
+  currency       String            @db.Char(3)
+  method         PaymentMethodType
+  status         PaymentStatus     @default(PENDING)
+  provider       String?
+  providerRef    String?
+  idempotencyKey String?           @unique
+  rawResponse    Json?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  refunds        Refund[]
+
+  @@index([reservationId])
+  @@index([providerRef])
+}
+
+model Refund {
+  id             String   @id @default(uuid()) @db.Uuid
+  paymentId      String   @db.Uuid
+  payment        Payment  @relation(fields: [paymentId], references: [id])
+  amount         Decimal  @db.Decimal(12, 2)
+  reason         String?
+  providerRef    String?
+  idempotencyKey String?  @unique
+  createdAt      DateTime @default(now())
+}
+
+model CommissionRecord {
+  id            String   @id @default(uuid()) @db.Uuid
+  reservationId String   @unique @db.Uuid
+  propertyId    String   @db.Uuid
+  ratePercent   Decimal  @db.Decimal(5, 2)
+  amount        Decimal  @db.Decimal(12, 2)
+  currency      String   @db.Char(3)
+  createdAt     DateTime @default(now())
+}
+
+model Payout {
+  id         String       @id @default(uuid()) @db.Uuid
+  propertyId String       @db.Uuid
+  amount     Decimal      @db.Decimal(12, 2)
+  currency   String       @db.Char(3)
+  status     PayoutStatus @default(SCHEDULED)
+  periodStart DateTime    @db.Date
+  periodEnd  DateTime     @db.Date
+  paidAt     DateTime?
+  createdAt  DateTime     @default(now())
+}
+
+model FinancialTransaction {
+  id         String   @id @default(uuid()) @db.Uuid
+  propertyId String?  @db.Uuid
+  type       String
+  amount     Decimal  @db.Decimal(12, 2)
+  currency   String   @db.Char(3)
+  reference  String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([propertyId, createdAt])
+}
+
+model WebhookEvent {
+  id           String    @id @default(uuid()) @db.Uuid
+  provider     String
+  eventType    String
+  payload      Json
+  signature    String?
+  processedAt  DateTime?
+  failedAt     DateTime?
+  error        String?
+  idempotencyKey String? @unique
+  createdAt    DateTime  @default(now())
+
+  @@index([provider, createdAt])
+}
+
+// ═══════════════════════════════════════════════════════════
+// Ops, messaging, reviews, support, promos, platform
+// ═══════════════════════════════════════════════════════════
+
+model HousekeepingTask {
+  id             String                 @id @default(uuid()) @db.Uuid
+  propertyId     String                 @db.Uuid
+  physicalRoomId String                 @db.Uuid
+  physicalRoom   PhysicalRoom           @relation(fields: [physicalRoomId], references: [id])
+  assigneeId     String?                @db.Uuid
+  priority       Int                    @default(3)
+  status         HousekeepingTaskStatus @default(PENDING)
+  notes          String?
+  completedAt    DateTime?
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+}
+
+model MaintenanceTicket {
+  id             String              @id @default(uuid()) @db.Uuid
+  propertyId     String              @db.Uuid
+  physicalRoomId String?             @db.Uuid
+  physicalRoom   PhysicalRoom?       @relation(fields: [physicalRoomId], references: [id])
+  title          String
+  description    String?
+  category       String?
+  priority       MaintenancePriority @default(MEDIUM)
+  status         MaintenanceStatus   @default(OPEN)
+  assigneeId     String?             @db.Uuid
+  resolvedAt     DateTime?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+}
+
+model MessageThread {
+  id            String    @id @default(uuid()) @db.Uuid
+  propertyId    String?   @db.Uuid
+  reservationId String?   @db.Uuid
+  subject       String?
+  createdAt     DateTime  @default(now())
+  messages      Message[]
+}
+
+model Message {
+  id         String         @id @default(uuid()) @db.Uuid
+  threadId   String         @db.Uuid
+  thread     MessageThread  @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  senderId   String         @db.Uuid
+  sender     User           @relation("MessageSender", fields: [senderId], references: [id])
+  reservationId String?     @db.Uuid
+  reservation Reservation?  @relation(fields: [reservationId], references: [id])
+  body       String
+  createdAt  DateTime       @default(now())
+}
+
+model NotificationTemplate {
+  id        String              @id @default(uuid()) @db.Uuid
+  code      String
+  channel   NotificationChannel
+  locale    LocaleCode          @default(en)
+  subject   String?
+  body      String
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+
+  @@unique([code, channel, locale])
+}
+
+model Notification {
+  id        String              @id @default(uuid()) @db.Uuid
+  userId    String              @db.Uuid
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  channel   NotificationChannel
+  template  String?
+  subject   String?
+  body      String
+  status    NotificationStatus  @default(QUEUED)
+  sentAt    DateTime?
+  createdAt DateTime            @default(now())
+
+  @@index([userId, status])
+}
+
+model Review {
+  id            String       @id @default(uuid()) @db.Uuid
+  propertyId    String       @db.Uuid
+  property      Property     @relation(fields: [propertyId], references: [id])
+  reservationId String       @unique @db.Uuid
+  reservation   Reservation  @relation(fields: [reservationId], references: [id])
+  authorId      String       @db.Uuid
+  author        User         @relation(fields: [authorId], references: [id])
+  overallScore  Decimal      @db.Decimal(3, 1)
+  categoryScores Json?
+  title         String?
+  body          String?
+  positive      String?
+  negative      String?
+  isAnonymous   Boolean      @default(false)
+  status        ReviewStatus @default(PENDING)
+  hotelReply    String?
+  hotelRepliedAt DateTime?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+}
+
+model Promotion {
+  id          String    @id @default(uuid()) @db.Uuid
+  code        String?   @unique
+  name        String
+  description String?
+  percentOff  Decimal?  @db.Decimal(5, 2)
+  amountOff   Decimal?  @db.Decimal(12, 2)
+  currency    String?   @db.Char(3)
+  startsAt    DateTime?
+  endsAt      DateTime?
+  usageLimit  Int?
+  usedCount   Int       @default(0)
+  minBookingAmount Decimal? @db.Decimal(12, 2)
+  propertyIds String[]  @default([])
+  isPlatform  Boolean   @default(false)
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+}
+
+model SupportTicket {
+  id           String         @id @default(uuid()) @db.Uuid
+  requesterId  String         @db.Uuid
+  requester    User           @relation("TicketRequester", fields: [requesterId], references: [id])
+  assigneeId   String?        @db.Uuid
+  assignee     User?          @relation("TicketAssignee", fields: [assigneeId], references: [id])
+  reservationId String?       @db.Uuid
+  category     String?
+  priority     TicketPriority @default(MEDIUM)
+  status       TicketStatus   @default(OPEN)
+  subject      String
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  messages     SupportMessage[]
+}
+
+model SupportMessage {
+  id        String        @id @default(uuid()) @db.Uuid
+  ticketId  String        @db.Uuid
+  ticket    SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  authorId  String        @db.Uuid
+  body      String
+  isInternal Boolean      @default(false)
+  createdAt DateTime      @default(now())
+}
+
+model SavedProperty {
+  userId     String   @db.Uuid
+  propertyId String   @db.Uuid
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@id([userId, propertyId])
+}
+
+model RecentlyViewedProperty {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @db.Uuid
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  propertyId String   @db.Uuid
+  viewedAt   DateTime @default(now())
+
+  @@index([userId, viewedAt])
+}
+
+model AuditLog {
+  id         String   @id @default(uuid()) @db.Uuid
+  actorId    String?  @db.Uuid
+  actor      User?    @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+  action     String
+  resource   String
+  resourceId String?
+  propertyId String?  @db.Uuid
+  ipAddress  String?
+  userAgent  String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([actorId, createdAt])
+  @@index([resource, resourceId])
+  @@index([propertyId, createdAt])
+}
+
+model SystemSetting {
+  id        String   @id @default(uuid()) @db.Uuid
+  key       String   @unique
+  value     Json
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+}
+
+model Destination {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String
+  slug        String   @unique
+  countryCode String   @db.Char(2)
+  type        String   @default("city")
+  latitude    Decimal? @db.Decimal(10, 7)
+  longitude   Decimal? @db.Decimal(10, 7)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+}
+
+model ExchangeRate {
+  id           String   @id @default(uuid()) @db.Uuid
+  baseCurrency String   @db.Char(3)
+  quoteCurrency String  @db.Char(3)
+  rate         Decimal  @db.Decimal(18, 8)
+  asOf         DateTime @default(now())
+
+  @@unique([baseCurrency, quoteCurrency, asOf])
+}
