@@ -6,15 +6,18 @@ type StayCardProps = {
   nights?: number
   saved?: boolean
   onToggleSave?: (id: string) => void
+  /** Query string (without ? ) preserving dates/rooms/occupants into detail. */
+  query?: string
 }
 
-export function StayCard({ stay, nights = 4, saved = false, onToggleSave }: StayCardProps) {
+export function StayCard({ stay, nights = 4, saved = false, onToggleSave, query = '' }: StayCardProps) {
   const total = stay.nightlyFrom * nights
+  const href = query ? `/stay/${stay.id}?${query}` : `/stay/${stay.id}`
 
   return (
     <article className="stay-card lux-card maison-stay">
       <div className="stay-card__media">
-        <Link to={`/stay/${stay.id}`}>
+        <Link to={href}>
           <img src={stay.image} alt={stay.name} loading="lazy" />
         </Link>
         <div className="maison-stay__veil" aria-hidden="true" />
@@ -38,7 +41,7 @@ export function StayCard({ stay, nights = 4, saved = false, onToggleSave }: Stay
           <span className="muted">({stay.reviews})</span>
         </div>
         <h3>
-          <Link to={`/stay/${stay.id}`}>{stay.name}</Link>
+          <Link to={href}>{stay.name}</Link>
         </h3>
         <p className="muted maison-stay__meta">
           {stay.typeLabel} · {stay.neighborhood}
@@ -56,7 +59,7 @@ export function StayCard({ stay, nights = 4, saved = false, onToggleSave }: Stay
             <p className="price-gold">${stay.nightlyFrom}</p>
             <p className="muted small">per night · ${total.toLocaleString()} total</p>
           </div>
-          <Link to={`/stay/${stay.id}`} className="maison-stay__link">
+          <Link to={href} className="maison-stay__link">
             View suite
           </Link>
         </div>

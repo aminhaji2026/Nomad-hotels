@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { AppShell, BrandLockup } from '../components/AppShell'
 
@@ -108,9 +108,6 @@ export function CustomerLoginPage() {
           </button>
         </form>
 
-        <p className="muted small auth-page__foot">
-          Hotel partner or platform staff? <Link to="/staff/login">Staff portal</Link>
-        </p>
       </main>
     </AppShell>
   )

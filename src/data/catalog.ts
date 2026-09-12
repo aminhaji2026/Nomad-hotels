@@ -234,6 +234,39 @@ export const stays: Stay[] = [
     },
     map: { lat: -5.726, lng: 39.298 },
   },
+  {
+    id: 'hargeisa-courtyard-guest',
+    name: 'Hargeisa Courtyard Guest House',
+    city: 'Hargeisa',
+    country: 'Somaliland',
+    neighborhood: 'Sha’ab Area',
+    type: 'guest_house',
+    typeLabel: 'Guest House',
+    image:
+      'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1400&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1400&q=80',
+    ],
+    nightlyFrom: 55,
+    rating: 4.6,
+    reviews: 96,
+    guestScore: 9.1,
+    badge: 'New',
+    amenities: ['Breakfast Included', 'Wi-Fi', 'Parking', 'Free Cancellation'],
+    highlights: ['Family-run', 'Courtyard', 'Home cooking', 'Wi-Fi'],
+    summary: 'A calm family guest house with leafy courtyard seating and home-cooked breakfast.',
+    room: {
+      name: 'Garden Twin',
+      tag: 'Courtyard',
+      bed: 'Twin Beds',
+      guests: 2,
+      sizeSqm: 22,
+      image:
+        'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=800&q=80',
+      blurb: 'Bright twin room opening toward the courtyard.',
+    },
+    map: { lat: 9.5624, lng: 44.077 },
+  },
 ]
 
 export const vehicles: Vehicle[] = [

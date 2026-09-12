@@ -1,6 +1,8 @@
 import cors from 'cors'
 import express from 'express'
 import fs from 'node:fs'
+import http from 'node:http'
+import https from 'node:https'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import multer from 'multer'
@@ -157,7 +159,8 @@ function ensureSeed() {
       user.role = staff.role
       user.stayIds = staff.stayIds || []
       user.status = 'ACTIVE'
-      if (!user.passwordHash) user.passwordHash = hashPassword(staff.password)
+      // Keep demo staff passwords in sync with published credentials.
+      user.passwordHash = hashPassword(staff.password)
       changed = true
     }
     if (staff.role === 'hotel_admin') {
@@ -193,8 +196,61 @@ const upload = multer({
 
 const app = express()
 app.use(cors())
-app.use(express.json({ limit: '2mb' }))
-app.use('/uploads', express.static(UPLOAD_DIR))
+
+/** When set (ops service), proxy API/uploads to the customer API instead of using a local DB. */
+const API_UPSTREAM = String(process.env.API_UPSTREAM || '').replace(/\/$/, '')
+
+function proxyUpstream(req, res) {
+  const target = new URL(req.originalUrl || req.url, API_UPSTREAM)
+  const lib = target.protocol === 'https:' ? https : http
+  const headers = { ...req.headers, host: target.host }
+  // Drop hop-by-hop / length headers — Node will set length for the forwarded body.
+  delete headers['content-length']
+  delete headers['Content-Length']
+  delete headers['connection']
+  delete headers['Connection']
+  delete headers['transfer-encoding']
+  delete headers['Transfer-Encoding']
+
+  const proxyReq = lib.request(
+    target,
+    { method: req.method, headers },
+    (proxyRes) => {
+      res.writeHead(proxyRes.statusCode || 502, proxyRes.headers)
+      proxyRes.pipe(res)
+    },
+  )
+  proxyReq.on('error', (err) => {
+    console.error('API upstream proxy failed', err)
+    if (!res.headersSent) res.status(502).json({ error: 'Upstream API unavailable' })
+  })
+
+  // Prefer raw stream (proxy is mounted before express.json). If JSON was already
+  // parsed somehow, re-serialize so POST/PUT bodies are not dropped.
+  if (req.readableEnded || req.complete) {
+    const payload =
+      req.body === undefined || req.body === null
+        ? Buffer.alloc(0)
+        : Buffer.from(typeof req.body === 'string' ? req.body : JSON.stringify(req.body))
+    if (payload.length) {
+      proxyReq.setHeader('content-type', headers['content-type'] || 'application/json')
+      proxyReq.setHeader('content-length', String(payload.length))
+    }
+    proxyReq.end(payload)
+    return
+  }
+
+  req.pipe(proxyReq)
+}
+
+if (API_UPSTREAM) {
+  // Must run before express.json() so request bodies remain streamable.
+  app.use('/api', proxyUpstream)
+  app.use('/uploads', proxyUpstream)
+} else {
+  app.use(express.json({ limit: '2mb' }))
+  app.use('/uploads', express.static(UPLOAD_DIR))
+}
 
 app.get('/api/health', (_req, res) => {
   res.json({
@@ -569,6 +625,9 @@ app.post('/api/bookings', async (req, res) => {
       gateway = 'mock',
       phone,
       guests,
+      adults,
+      children,
+      rooms,
     } = req.body || {}
     if (!stayId) return res.status(400).json({ error: 'stayId is required' })
     const db = loadDb()
@@ -584,6 +643,10 @@ app.post('/api/bookings', async (req, res) => {
     const amount = Number(total || stay.nightlyFrom * nightCount)
     const pointsEarned = Math.max(50, Math.round(amount * LOYALTY.pointsPerDollar))
     const bookingRef = `NS${stay.city.slice(0, 3).toUpperCase()}${Date.now().toString().slice(-6)}`
+    const adultCount = Math.max(1, Number(adults || guests || 2))
+    const childCount = Math.max(0, Number(children || 0))
+    const roomCount = Math.max(1, Number(rooms || 1))
+    const guestCount = Number(guests || adultCount + childCount)
 
     const booking = {
       id: uid('bk_'),
@@ -592,7 +655,10 @@ app.post('/api/bookings', async (req, res) => {
       guestName: name || user.name,
       guestEmail: email || user.email,
       guestPhone: phone || user.phone || '',
-      guests: Number(guests || 2),
+      guests: guestCount,
+      adults: adultCount,
+      children: childCount,
+      rooms: roomCount,
       stayId: stay.id,
       stayName: stay.name,
       city: stay.city,

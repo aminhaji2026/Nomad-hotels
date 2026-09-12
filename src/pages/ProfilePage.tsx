@@ -59,8 +59,6 @@ export function ProfilePage() {
             </button>
             <p className="muted small" style={{ marginTop: '1rem' }}>
               Prefer a password? <Link to="/login">Guest login</Link>
-              {' · '}
-              <Link to="/staff/login">Staff portal</Link>
             </p>
           </div>
         )}
@@ -150,9 +148,6 @@ export function ProfilePage() {
         )}
 
         <ul className="settings-list">
-          <li>
-            <Link to="/host">Upload hotel images & info</Link>
-          </li>
           <li>Payment methods</li>
           <li>Travel preferences</li>
           <li>Trusted & Secure · 24/7 Concierge</li>

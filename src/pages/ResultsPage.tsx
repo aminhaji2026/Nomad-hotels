@@ -7,6 +7,13 @@ import { AppShell } from '../components/AppShell'
 import { MapPreview } from '../components/MapPreview'
 import { StayCardSkeleton } from '../components/Skeleton'
 import { StayCard } from '../components/StayCard'
+import { StayCriteriaFields } from '../components/StayCriteriaFields'
+import {
+  defaultStayDates,
+  formatOccupancyLabel,
+  parseOccupancyParams,
+  stayCriteriaSearchParams,
+} from '../lib/stayCriteria'
 
 const categoryToType: Record<string, string> = {
   hotels: 'hotel',
@@ -25,10 +32,11 @@ export function ResultsPage() {
   const mappedType = categoryToType[categoryParam] || ''
   const [type, setType] = useState(params.get('type') || mappedType || 'any')
 
+  const defaults = defaultStayDates()
   const city = params.get('city') || 'Dubai'
-  const checkIn = params.get('checkIn') || '2025-05-24'
-  const checkOut = params.get('checkOut') || '2025-05-28'
-  const guests = params.get('guests') || '2 Guests, 1 Room'
+  const [checkIn, setCheckIn] = useState(params.get('checkIn') || defaults.checkIn)
+  const [checkOut, setCheckOut] = useState(params.get('checkOut') || defaults.checkOut)
+  const [occupancy, setOccupancy] = useState(() => parseOccupancyParams(params))
   const nights = nightsBetween(checkIn, checkOut)
   const isCarRental = type === 'vehicles' || categoryParam === 'vehicles'
 
@@ -78,6 +86,29 @@ export function ResultsPage() {
     setParams(nextParams, { replace: true })
   }
 
+  function applyCriteria(event?: React.FormEvent) {
+    event?.preventDefault()
+    const next = stayCriteriaSearchParams({
+      city,
+      checkIn,
+      checkOut,
+      occupancy,
+      category: categoryParam || undefined,
+      type: type !== 'any' ? type : undefined,
+    })
+    if (view !== 'list') next.set('view', view)
+    if (sort !== 'best') next.set('sort', sort)
+    if (price !== 'any') next.set('price', price)
+    setParams(next)
+  }
+
+  const stayQuery = stayCriteriaSearchParams({
+    city,
+    checkIn,
+    checkOut,
+    occupancy,
+  }).toString()
+
   return (
     <AppShell>
       <header className="results-header">
@@ -86,15 +117,40 @@ export function ResultsPage() {
             ←
           </Link>
           <div className="results-header__title">
-            <strong>{isCarRental ? 'Car Rental' : city}</strong>
+            <strong>
+              {isCarRental
+                ? 'Car Rental'
+                : categoryParam === 'holiday_homes'
+                  ? 'Holiday homes'
+                  : categoryParam === 'guest_houses'
+                    ? 'Guest houses'
+                    : categoryParam === 'hotels'
+                      ? 'Hotels'
+                      : city}
+            </strong>
             <span>
-              {checkIn.slice(5)} – {checkOut.slice(5)} · {guests}
+              {checkIn.slice(5)} – {checkOut.slice(5)} · {formatOccupancyLabel(occupancy)}
             </span>
           </div>
           <button type="button" className="icon-btn" aria-label="Notifications">
             ⌁
           </button>
         </div>
+
+        <form className="results-refine maison-desk" onSubmit={applyCriteria}>
+          <StayCriteriaFields
+            compact
+            checkIn={checkIn}
+            checkOut={checkOut}
+            occupancy={occupancy}
+            onCheckInChange={setCheckIn}
+            onCheckOutChange={setCheckOut}
+            onOccupancyChange={setOccupancy}
+          />
+          <button type="submit" className="btn btn--amber">
+            Update search
+          </button>
+        </form>
 
         <div className="filter-row">
           <select value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Sort">
@@ -177,6 +233,7 @@ export function ResultsPage() {
                     nights={nights}
                     saved={isSaved(stay.id)}
                     onToggleSave={toggleSaved}
+                    query={stayQuery}
                   />
                 ))}
             {!loading && results.length === 0 && (

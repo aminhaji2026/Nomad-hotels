@@ -6,6 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:customer": "tsc -b && VITE_APP_SURFACE=customer vite build",
+    "build:ops": "tsc -b && VITE_APP_SURFACE=ops vite build",
+    "dev:ops": "VITE_APP_SURFACE=ops vite",
     "lint": "oxlint",
     "preview": "vite preview",
     "start": "NODE_ENV=production node server/index.js",
