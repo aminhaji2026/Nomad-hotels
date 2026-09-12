@@ -2,30 +2,19 @@
 
 Production-oriented NestJS modular monolith for a multi-hotel booking platform.
 
-## Phase 1 (implemented)
+## Implemented phases
 
-- PostgreSQL + Prisma schema for the full platform domain
-- Auth: register/login/refresh/logout, OTP, password reset, session list/revoke
-- RBAC: platform + hotel roles/permissions with property/group scoping
-- Hotel groups, properties, staff invitations
-- Hotel onboarding workflow with platform review/approval
-- Buildings, floors, room types, physical rooms
-- Audit logging, Swagger, health endpoints, Docker Compose
-
-## Phase 2 (implemented)
-
-- Rate plans, daily rates, and stay restrictions
-- Inventory calendar open/adjust/state, holds with TTL expiry
-- Availability + pricing engine (occupancy-aware)
-- Public hotel search and hotel detail offers
-- Reservation create/cancel/modify with atomic inventory updates
-- Idempotent booking keys and double-booking protection via conditional updates + serializable transactions
+1. **Auth / RBAC / onboarding / property & rooms**
+2. **Rates / inventory / search / reservations**
+3. **Payments / commission / statements / payouts**
+4. **Front desk / housekeeping / maintenance / messaging / notifications**
+5. **Reviews / promotions / support / reporting / platform admin**
+6. **Hardening** — critical unit + DB e2e suites, security/perf notes, production runbook, CI
 
 ## Quick start
 
 ```bash
 cp .env.example .env
-# start Postgres/Redis (compose or local)
 docker compose up -d postgres redis
 npm install
 npx prisma migrate deploy
@@ -45,18 +34,18 @@ npm run start:dev
 
 Seed also opens ~90 days of inventory and a BAR rate plan for the demo property.
 
-## Architecture docs
+## Tests
 
-See `docs/` for assessment, architecture, ERD, permission matrix, endpoint map, and checklist.
+```bash
+npm test          # unit
+npm run test:e2e  # DB-backed e2e (requires migrate + seed)
+```
+
+## Docs
+
+See `docs/` for architecture, ERD, permissions, API map, checklist, security review, performance notes, and production runbook.
 
 ## Coexistence with legacy Express app
 
 The existing Vite SPA + Express JSON API in the repo root remain intact under `/api`.  
 This Nest service is the new platform backend under `/api/v1`.
-
-## Next phases
-
-3. Payments, commission, payouts  
-4. Front desk / HK / maintenance / messaging  
-5. Reviews, promos, support, reporting  
-6. Hardening, security review, performance, CI

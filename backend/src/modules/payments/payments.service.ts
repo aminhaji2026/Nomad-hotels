@@ -268,19 +268,34 @@ export class PaymentsService {
         data: { status: isFull ? 'REFUNDED' : 'PARTIALLY_REFUNDED' },
       });
 
+      // Keep stay lifecycle intact for partial refunds and in-house/past stays.
+      // Only flip reservation.status on a full refund of a pre-arrival booking.
+      const preArrival = [
+        'PENDING_PAYMENT',
+        'PAYMENT_PROCESSING',
+        'CONFIRMED',
+        'MODIFIED',
+        'PARTIALLY_REFUNDED',
+      ].includes(payment.reservation.status);
+      const lifecycleStatus = isFull && preArrival ? 'REFUNDED' : undefined;
+
       await tx.reservation.update({
         where: { id: payment.reservationId },
         data: {
           paymentStatus: isFull ? 'REFUNDED' : 'PARTIALLY_REFUNDED',
-          status: isFull ? 'REFUNDED' : 'PARTIALLY_REFUNDED',
-          statusHistory: {
-            create: {
-              fromStatus: payment.reservation.status,
-              toStatus: isFull ? 'REFUNDED' : 'PARTIALLY_REFUNDED',
-              actorId: user.id,
-              note: dto.reason ?? 'Refund issued',
-            },
-          },
+          ...(lifecycleStatus
+            ? {
+                status: lifecycleStatus,
+                statusHistory: {
+                  create: {
+                    fromStatus: payment.reservation.status,
+                    toStatus: lifecycleStatus,
+                    actorId: user.id,
+                    note: dto.reason ?? 'Refund issued',
+                  },
+                },
+              }
+            : {}),
         },
       });
 

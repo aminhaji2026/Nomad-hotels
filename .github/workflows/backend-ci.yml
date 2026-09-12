@@ -30,11 +30,23 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     env:
       DATABASE_URL: postgresql://nomadstay:nomadstay@127.0.0.1:5432/nomadstay?schema=public
+      REDIS_URL: redis://127.0.0.1:6379
       JWT_ACCESS_SECRET: ci-access-secret-change-me-in-production-min-32
       JWT_REFRESH_SECRET: ci-refresh-secret-change-me-in-production-min-32
       NODE_ENV: test
+      PORT: 4000
+      API_PREFIX: api/v1
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -45,6 +57,8 @@ jobs:
       - run: npm ci
       - run: npx prisma generate
       - run: npx prisma migrate deploy
+      - run: npm run seed
       - run: npm run lint
       - run: npm run build
       - run: npm test -- --passWithNoTests
+      - run: npm run test:e2e

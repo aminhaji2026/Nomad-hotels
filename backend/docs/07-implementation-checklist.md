@@ -44,7 +44,8 @@
 ## Phase 6 — Hardening
 - [x] Critical scenario unit coverage (double-booking, refund caps, cross-hotel 403, review-without-stay)
 - [x] Build/lint/test green for Phases 3–5 modules
-- [ ] Broader e2e suite against live DB (follow-up)
-- [ ] Security review, load testing, production runbooks (follow-up)
+- [x] Broader DB-backed e2e suite (auth, search, book/pay/refund, front desk, support, promos, cross-hotel 403)
+- [x] Security review notes, performance notes, production runbook
+- [x] CI runs migrate + seed + unit + e2e
 
 **Rule:** a feature is only marked complete when end-to-end DB-backed flow works and tests pass.

@@ -1,21 +1,12 @@
-import { INestApplication, ValidationPipe } from '@nestjs/common';
-import { Test } from '@nestjs/testing';
+import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
-import { AppModule } from '../src/app.module';
+import { createTestApp, login } from './utils/e2e-app';
 
 describe('Auth (e2e)', () => {
   let app: INestApplication;
 
   beforeAll(async () => {
-    const moduleRef = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-    app = moduleRef.createNestApplication();
-    app.setGlobalPrefix('api/v1');
-    app.useGlobalPipes(
-      new ValidationPipe({ whitelist: true, transform: true }),
-    );
-    await app.init();
+    app = await createTestApp();
   });
 
   afterAll(async () => {
@@ -26,17 +17,44 @@ describe('Auth (e2e)', () => {
     const email = `guest_${Date.now()}@example.com`;
     const res = await request(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({ email, password: 'ChangeMe123!', firstName: 'A', lastName: 'B' })
+      .send({
+        email,
+        password: 'ChangeMe123!',
+        firstName: 'E2E',
+        lastName: 'Guest',
+      })
       .expect(201);
+
     expect(res.body.success).toBe(true);
     expect(res.body.data.accessToken).toBeDefined();
+    expect(res.body.data.refreshToken).toBeDefined();
   });
 
-  it('logs in seed superadmin', async () => {
+  it('logs in seed superadmin and owner', async () => {
+    const admin = await login(app, 'superadmin@nomadstay.local');
+    const owner = await login(app, 'owner@demo-hotel.local');
+    expect(admin).toBeTruthy();
+    expect(owner).toBeTruthy();
+  });
+
+  it('rejects invalid credentials', async () => {
     const res = await request(app.getHttpServer())
       .post('/api/v1/auth/login')
-      .send({ email: 'superadmin@nomadstay.local', password: 'ChangeMe123!' })
-      .expect(201);
-    expect(res.body.data.refreshToken).toBeDefined();
+      .send({
+        email: 'superadmin@nomadstay.local',
+        password: 'wrong-password',
+      });
+    expect(res.status).toBeGreaterThanOrEqual(400);
+    expect(res.body.success).toBe(false);
+  });
+
+  it('returns /auth/me for authenticated user', async () => {
+    const token = await login(app, 'superadmin@nomadstay.local');
+    const res = await request(app.getHttpServer())
+      .get('/api/v1/auth/me')
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.email).toBe('superadmin@nomadstay.local');
   });
 });
