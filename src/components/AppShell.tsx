@@ -32,7 +32,7 @@ export function BrandLockup({
 export function AppShell({ children, hideNav = false, flush = false, topBar }: AppShellProps) {
   return (
     <div
-      className={`app-shell${hideNav ? ' app-shell--bare' : ''}${flush ? ' app-shell--flush' : ''}${topBar ? ' app-shell--with-top' : ''}`}
+      className={`app-shell${hideNav ? ' app-shell--bare' : ''}${flush ? ' app-shell--flush' : ''}${topBar ? ' app-shell--with-top' : ''}${flush && topBar ? ' app-shell--overlay-top' : ''}`}
     >
       {topBar ? <div className="app-shell__top">{topBar}</div> : null}
       <div className="app-frame">{children}</div>

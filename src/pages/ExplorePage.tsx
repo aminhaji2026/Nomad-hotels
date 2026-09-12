@@ -8,7 +8,20 @@ import { AppShell, BrandLockup } from '../components/AppShell'
 import { StayCard } from '../components/StayCard'
 import { StayCardSkeleton } from '../components/Skeleton'
 import { Reveal } from '../components/Reveal'
+import { HeroMediaReel } from '../components/HeroMediaReel'
 import { categoryIcons } from '../components/LuxIcons'
+import { useDragScroll } from '../hooks/useDragScroll'
+
+function scrollFrameToId(id: string) {
+  const target = document.getElementById(id)
+  const frame = document.querySelector('.app-frame') as HTMLElement | null
+  if (!target || !frame) {
+    target?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    return
+  }
+  const top = target.getBoundingClientRect().top - frame.getBoundingClientRect().top + frame.scrollTop - 8
+  frame.scrollTo({ top, behavior: 'smooth' })
+}
 
 const categories = [
   { id: 'hotels', label: 'Hotels', short: 'Hotels' },
@@ -30,6 +43,8 @@ export function ExplorePage() {
   const itemRefs = useRef<(HTMLButtonElement | null)[]>([])
   const [indicator, setIndicator] = useState({ left: 0, width: 0 })
   const activeIndex = categories.findIndex((c) => c.id === category)
+
+  useDragScroll('.h-scroll, .hero-reel__track')
 
   useLayoutEffect(() => {
     const update = () => {
@@ -80,13 +95,11 @@ export function ExplorePage() {
 
   function selectCategory(id: (typeof categories)[number]['id']) {
     setCategory(id)
-    if (id === 'vehicles') {
-      document.getElementById('maison-vehicles')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }
+    if (id === 'vehicles') scrollFrameToId('maison-vehicles')
   }
 
   function scrollToSearch() {
-    document.getElementById('maison-reserve')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    scrollFrameToId('maison-reserve')
   }
 
   return (
@@ -134,11 +147,7 @@ export function ExplorePage() {
       }
     >
       <section className="atelier-hero maison-hero" aria-label="NomadStay introduction">
-        <img
-          className="atelier-hero__media"
-          src="https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=1600&q=80"
-          alt=""
-        />
+        <HeroMediaReel className="atelier-hero__media" />
         <div className="atelier-hero__veil" aria-hidden="true" />
         <div className="atelier-hero__grain" aria-hidden="true" />
         <div className="atelier-hero__content lux-stagger">
