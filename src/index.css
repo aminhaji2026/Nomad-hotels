@@ -2094,19 +2094,13 @@ h1, h2 {
 
 .lux-reveal {
   opacity: 0;
-  transform: translateY(28px);
-  filter: blur(3px);
-  transition:
-    opacity 700ms cubic-bezier(0.22, 1, 0.36, 1),
-    transform 700ms cubic-bezier(0.22, 1, 0.36, 1),
-    filter 700ms ease;
+  /* Avoid transform/filter here — they create containing blocks that break nested h-scroll. */
+  transition: opacity 700ms cubic-bezier(0.22, 1, 0.36, 1);
   transition-delay: var(--lux-delay, 0ms);
 }
 
 .lux-reveal.is-visible {
   opacity: 1;
-  transform: none;
-  filter: none;
 }
 
 .lux-stagger > .lux-stagger__item {
@@ -3323,4 +3317,297 @@ input:focus, select:focus, textarea:focus {
   .app-shell::before {
     animation: none !important;
   }
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   Hero glass top + media reel + scroll/search fit fixes
+   ═══════════════════════════════════════════════════════════ */
+
+.app-shell--overlay-top {
+  position: relative;
+}
+
+.app-shell--overlay-top .app-shell__top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  pointer-events: none;
+}
+
+.app-shell--overlay-top .app-shell__top * {
+  pointer-events: auto;
+}
+
+.app-shell--overlay-top .app-frame {
+  /* hero sits under the glass icons — no reserved blank strip */
+  padding-top: 0;
+}
+
+.lux-top-line {
+  padding: 0.55rem 0.7rem 0.45rem;
+  background: linear-gradient(180deg, rgba(12, 20, 18, 0.28), rgba(12, 20, 18, 0.04));
+  border-bottom: 1px solid rgba(255, 248, 236, 0.12);
+  backdrop-filter: blur(14px) saturate(1.15);
+  -webkit-backdrop-filter: blur(14px) saturate(1.15);
+  box-shadow: none;
+}
+
+.lux-select-rail {
+  background: linear-gradient(145deg, rgba(255, 252, 248, 0.16), rgba(255, 252, 248, 0.06));
+  border: 1px solid rgba(255, 248, 236, 0.22);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.lux-select {
+  color: rgba(255, 248, 236, 0.82);
+}
+
+.lux-select__ring {
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255, 248, 236, 0.28), transparent 55%),
+    linear-gradient(145deg, rgba(255, 248, 236, 0.14), rgba(31, 77, 71, 0.08));
+  border: 1px solid rgba(255, 248, 236, 0.35);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.lux-select__icon {
+  color: #fff8ef;
+}
+
+.lux-select__label {
+  color: rgba(255, 248, 236, 0.88);
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.35);
+}
+
+.lux-select.is-active {
+  color: #fff8ef;
+}
+
+.maison-hero {
+  min-height: 100%;
+  min-height: min(100svh, 920px);
+  height: min(100svh, 920px);
+  margin: 0;
+}
+
+.maison-hero .atelier-hero__content {
+  padding-top: 5.5rem; /* clear glass icon rail */
+}
+
+/* Mixed image/video hero reel */
+.hero-reel,
+.atelier-hero__media.hero-reel {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  animation: none;
+  overflow: hidden;
+  background: #15201c;
+}
+
+.hero-reel__track {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  touch-action: pan-x;
+}
+
+.hero-reel__track::-webkit-scrollbar {
+  display: none;
+}
+
+.hero-reel__slide {
+  position: relative;
+  flex: 0 0 100%;
+  width: 100%;
+  height: 100%;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+.hero-reel__slide img,
+.hero-reel__slide video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Keep vertical page scroll working inside the shell.
+   Do NOT set touch-action: pan-y on .app-frame — it blocks child h-scroll. */
+.app-frame {
+  overscroll-behavior: contain;
+}
+
+.h-scroll,
+.chip-row,
+.filter-row,
+.amenity-icons {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+}
+
+.h-scroll > *,
+.h-scroll--wide > * {
+  scroll-snap-align: start;
+}
+
+/* Search desk must fit the shell without horizontal bleed */
+.maison-desk,
+.search-card.maison-desk {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.95rem;
+  margin: 0;
+  overflow: hidden;
+}
+
+.maison-desk .search-grid,
+.search-card .search-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.65rem;
+  width: 100%;
+}
+
+.maison-desk .search-field,
+.maison-desk .mini-field,
+.maison-desk input,
+.maison-desk select {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.maison-desk .search-field__row {
+  width: 100%;
+}
+
+.explore-panel {
+  width: 100%;
+  max-width: 100%;
+  padding-inline: 1rem;
+  box-sizing: border-box;
+  overflow-x: visible;
+}
+
+@media (max-width: 767px) {
+  .maison-hero {
+    height: calc(100svh - env(safe-area-inset-bottom, 0px));
+    min-height: calc(100svh - env(safe-area-inset-bottom, 0px));
+  }
+
+  .maison-desk .search-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 768px) {
+  /* Keep horizontal rails scrollable even on tablet/desktop shell */
+  .h-scroll,
+  .h-scroll--wide {
+    display: flex !important;
+    grid-template-columns: none !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+  }
+
+  .h-scroll > *,
+  .h-scroll--wide > * {
+    width: auto;
+    min-width: 10.5rem;
+  }
+
+  .h-scroll--wide > * {
+    min-width: 15rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-reel__track {
+    scroll-behavior: auto;
+  }
+}
+
+/* Force reliable horizontal rails on all breakpoints */
+.rail-section-wrap,
+.rail-section,
+.explore-panel,
+.lux-reveal {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.h-scroll,
+.h-scroll--wide {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0; /* critical: allow flex child to shrink so overflow-x can engage */
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pinch-zoom;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  padding-bottom: 0.45rem;
+  cursor: grab;
+}
+
+.h-scroll:active,
+.h-scroll--wide:active {
+  cursor: grabbing;
+}
+
+.h-scroll > *,
+.h-scroll--wide > * {
+  flex: 0 0 auto !important;
+  scroll-snap-align: start;
+}
+
+.dest-card,
+.maison-dest {
+  width: 9.75rem !important;
+  min-width: 9.75rem !important;
+}
+
+.escape-card,
+.maison-escape {
+  width: 15.25rem !important;
+  min-width: 15.25rem !important;
+}
+
+.vehicle-card,
+.maison-vehicle {
+  width: 12.5rem !important;
+  min-width: 12.5rem !important;
+}
+
+
+.h-scroll.is-dragging,
+.h-scroll--wide.is-dragging,
+.hero-reel__track.is-dragging {
+  cursor: grabbing;
+  scroll-snap-type: none;
+  user-select: none;
 }
