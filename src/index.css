@@ -96,14 +96,16 @@ p {
 .app-shell {
   width: min(100%, 440px);
   margin: 0 auto;
-  min-height: 100vh;
-  min-height: 100svh;
+  height: 100vh;
+  height: 100svh;
   position: relative;
   background:
     linear-gradient(180deg, rgba(255, 252, 248, 0.92), rgba(245, 247, 243, 0.96)),
     var(--surface);
   box-shadow: var(--shadow);
-  overflow: clip;
+  overflow-x: clip;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   animation: shell-in 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
@@ -1202,10 +1204,12 @@ p {
 
   .app-shell {
     width: min(100%, 430px);
-    min-height: calc(100vh - 2rem);
+    height: calc(100vh - 2rem);
+    min-height: 0;
     margin: 1rem auto;
     border-radius: 28px;
-    overflow: hidden;
+    overflow-x: clip;
+    overflow-y: auto;
     border: 1px solid rgba(212, 175, 55, 0.12);
   }
 
@@ -1638,8 +1642,8 @@ p {
 
 /* ── Maison Nomad atelier overrides ───────────────────────── */
 @keyframes shell-in {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: none; }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes rise {
@@ -1963,8 +1967,8 @@ h1, h2 {
 }
 
 @keyframes lux-page-in {
-  from { opacity: 0; transform: translateY(16px); }
-  to { opacity: 1; transform: none; }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes lux-nav-pop {
@@ -2345,7 +2349,7 @@ input:focus, select:focus, textarea:focus {
   z-index: 40;
   padding: 0.55rem 0.7rem 0.45rem;
   background:
-    linear-gradient(180deg, rgba(250, 247, 241, 0.97) 0%, rgba(245, 241, 234, 0.92) 100%);
+    linear-gradient(180deg, rgba(250, 247, 241, 0.98) 0%, rgba(245, 241, 234, 0.94) 100%);
   border-bottom: 1px solid rgba(21, 32, 28, 0.08);
   backdrop-filter: blur(18px) saturate(1.2);
   box-shadow: 0 10px 28px rgba(21, 32, 28, 0.06);
@@ -2378,7 +2382,10 @@ input:focus, select:focus, textarea:focus {
   box-shadow:
     0 12px 28px rgba(31, 77, 71, 0.32),
     inset 0 1px 0 rgba(255, 248, 236, 0.22);
-  transition: transform 480ms cubic-bezier(0.22, 1, 0.36, 1), width 480ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition:
+    transform 520ms cubic-bezier(0.22, 1, 0.36, 1),
+    width 520ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform, width;
   pointer-events: none;
 }
 
