@@ -12,9 +12,9 @@ import { categoryIcons } from '../components/LuxIcons'
 
 const categories = [
   { id: 'hotels', label: 'Hotels', short: 'Hotels' },
-  { id: 'guest_houses', label: 'Guest Houses', short: 'Guests' },
-  { id: 'holiday_homes', label: 'Holiday Homes', short: 'Homes' },
-  { id: 'vehicles', label: 'Vehicles', short: 'Cars' },
+  { id: 'holiday_homes', label: 'Holiday homes', short: 'Homes' },
+  { id: 'guest_houses', label: 'Guest houses', short: 'Guests' },
+  { id: 'vehicles', label: 'Car Rental', short: 'Cars' },
 ] as const
 
 export function ExplorePage() {
@@ -72,7 +72,17 @@ export function ExplorePage() {
       guests,
       category,
     })
+    if (category === 'hotels') params.set('type', 'hotel')
+    if (category === 'holiday_homes') params.set('type', 'holiday_home')
+    if (category === 'guest_houses') params.set('type', 'guest_house')
     navigate(`/results?${params.toString()}`)
+  }
+
+  function selectCategory(id: (typeof categories)[number]['id']) {
+    setCategory(id)
+    if (id === 'vehicles') {
+      document.getElementById('maison-vehicles')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
   }
 
   function scrollToSearch() {
@@ -104,7 +114,7 @@ export function ExplorePage() {
                   ref={(el) => {
                     itemRefs.current[index] = el
                   }}
-                  onClick={() => setCategory(item.id)}
+                  onClick={() => selectCategory(item.id)}
                 >
                   <span className="lux-select__medal" aria-hidden="true">
                     <span className="lux-select__ring" />
@@ -112,7 +122,10 @@ export function ExplorePage() {
                       <Icon />
                     </span>
                   </span>
-                  <span className="lux-select__label">{item.short}</span>
+                  <span className="lux-select__label">
+                    <span className="lux-select__label--short">{item.short}</span>
+                    <span className="lux-select__label--full">{item.label}</span>
+                  </span>
                 </button>
               )
             })}
@@ -318,15 +331,15 @@ export function ExplorePage() {
         </Reveal>
 
         <Reveal className="rail-section-wrap">
-          <section className="rail-section">
+          <section className="rail-section" id="maison-vehicles">
             <div className="section-head section-head--maison">
               <div>
                 <p className="eyebrow">Arrivals & journeys</p>
                 <h2>
-                  Chauffeured <em>travel</em>
+                  Car <em>Rental</em>
                 </h2>
               </div>
-              <Link to="/results?category=vehicles">See all</Link>
+              <Link to="/results?category=vehicles&type=vehicles">See all</Link>
             </div>
             <div className="h-scroll">
               {vehicles.map((vehicle) => (

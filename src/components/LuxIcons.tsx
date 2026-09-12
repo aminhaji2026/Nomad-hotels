@@ -66,6 +66,7 @@ export function IconVehicle({ className }: IconProps) {
       <circle cx="16.6" cy="16.1" r="1.2" fill="currentColor" />
       <path d="M4.6 12h14.8" stroke="currentColor" strokeWidth="1.45" opacity="0.45" />
       <path d="M9.2 9.1h5.6" stroke="currentColor" strokeWidth="1.35" strokeLinecap="round" opacity="0.5" />
+      <path d="M18.2 7.2h2.3l.8 1.5" stroke="currentColor" strokeWidth="1.35" strokeLinecap="round" strokeLinejoin="round" opacity="0.7" />
     </svg>
   )
 }
