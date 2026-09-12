@@ -237,5 +237,95 @@ export const api = {
     request<{ stay: ApiStay }>(`/api/admin/stays/${id}`, { method: 'PATCH', body: payload }),
   archiveStay: (id: string) =>
     request<{ stay: ApiStay }>(`/api/admin/stays/${id}`, { method: 'DELETE' }),
+  adminApplications: (status = 'all') =>
+    request<{ applications: unknown[]; count: number }>(
+      `/api/admin/applications?status=${encodeURIComponent(status)}`,
+    ),
+  updateAdminApplication: (id: string, payload: Record<string, unknown>) =>
+    request<{ application: unknown }>(`/api/admin/applications/${id}`, { method: 'PATCH', body: payload }),
+  adminCustomers: (q = '') =>
+    request<{ customers: unknown[]; count: number }>(
+      `/api/admin/customers${q ? `?q=${encodeURIComponent(q)}` : ''}`,
+    ),
+  updateAdminCustomer: (id: string, payload: Record<string, unknown>) =>
+    request<{ customer: unknown }>(`/api/admin/customers/${id}`, { method: 'PATCH', body: payload }),
+  updateAdminBooking: (id: string, payload: Record<string, unknown>) =>
+    request<{ booking: unknown }>(`/api/admin/bookings/${id}`, { method: 'PATCH', body: payload }),
+  adminInventory: () =>
+    request<{ rooms: unknown[]; holds: unknown[]; alerts: unknown[] }>('/api/admin/inventory'),
+  updateAdminInventory: (roomId: string, payload: Record<string, unknown>) =>
+    request<{ room: unknown }>(`/api/admin/inventory/${roomId}`, { method: 'PATCH', body: payload }),
+  adminRates: () => request<{ ratePlans: unknown[]; count: number }>('/api/admin/rates'),
+  updateAdminRate: (id: string, payload: Record<string, unknown>) =>
+    request<{ ratePlan: unknown }>(`/api/admin/rates/${id}`, { method: 'PATCH', body: payload }),
+  adminCommissions: () => request<Record<string, unknown>>('/api/admin/commissions'),
+  updateAdminCommission: (payload: Record<string, unknown>) =>
+    request<{ settings: Record<string, unknown> }>('/api/admin/settings/commission', {
+      method: 'PATCH',
+      body: payload,
+    }),
+  adminRefunds: () => request<{ refunds: unknown[]; count: number }>('/api/admin/refunds'),
+  createAdminRefund: (payload: Record<string, unknown>) =>
+    request<{ refund: unknown; message?: string }>('/api/admin/refunds', { method: 'POST', body: payload }),
+  updateAdminRefund: (id: string, payload: Record<string, unknown>) =>
+    request<{ refund: unknown }>(`/api/admin/refunds/${id}`, { method: 'PATCH', body: payload }),
+  adminPayouts: () => request<{ payouts: unknown[]; forecast: number }>('/api/admin/payouts'),
+  createAdminPayout: (payload: Record<string, unknown>) =>
+    request<{ payout: unknown }>('/api/admin/payouts', { method: 'POST', body: payload }),
+  updateAdminPayout: (id: string, payload: Record<string, unknown>) =>
+    request<{ payout: unknown }>(`/api/admin/payouts/${id}`, { method: 'PATCH', body: payload }),
+  adminLedger: () => request<{ entries: unknown[]; count: number }>('/api/admin/ledger'),
+  adminPromotions: () => request<{ promotions: unknown[] }>('/api/admin/promotions'),
+  createAdminPromotion: (payload: Record<string, unknown>) =>
+    request<{ promotion: unknown }>('/api/admin/promotions', { method: 'POST', body: payload }),
+  updateAdminPromotion: (id: string, payload: Record<string, unknown>) =>
+    request<{ promotion: unknown }>(`/api/admin/promotions/${id}`, { method: 'PATCH', body: payload }),
+  adminAds: () => request<{ ads: unknown[] }>('/api/admin/ads'),
+  updateAdminAd: (id: string, payload: Record<string, unknown>) =>
+    request<{ ad: unknown }>(`/api/admin/ads/${id}`, { method: 'PATCH', body: payload }),
+  adminReviews: () => request<{ reviews: unknown[] }>('/api/admin/reviews'),
+  updateAdminReview: (id: string, payload: Record<string, unknown>) =>
+    request<{ review: unknown }>(`/api/admin/reviews/${id}`, { method: 'PATCH', body: payload }),
+  adminCms: () => request<{ pages: unknown[] }>('/api/admin/cms'),
+  updateAdminCms: (id: string, payload: Record<string, unknown>) =>
+    request<{ page: unknown }>(`/api/admin/cms/${id}`, { method: 'PATCH', body: payload }),
+  adminDestinations: () => request<{ destinations: unknown[] }>('/api/admin/destinations'),
+  createAdminDestination: (payload: Record<string, unknown>) =>
+    request<{ destination: unknown }>('/api/admin/destinations', { method: 'POST', body: payload }),
+  updateAdminDestination: (id: string, payload: Record<string, unknown>) =>
+    request<{ destination: unknown }>(`/api/admin/destinations/${id}`, { method: 'PATCH', body: payload }),
+  adminTaxonomy: () => request<{ taxonomy: Record<string, unknown> }>('/api/admin/taxonomy'),
+  updateAdminTaxonomy: (payload: Record<string, unknown>) =>
+    request<{ taxonomy: Record<string, unknown> }>('/api/admin/taxonomy', { method: 'PATCH', body: payload }),
+  adminSupport: () => request<{ tickets: unknown[] }>('/api/admin/support'),
+  updateAdminSupport: (id: string, payload: Record<string, unknown>) =>
+    request<{ ticket: unknown }>(`/api/admin/support/${id}`, { method: 'PATCH', body: payload }),
+  adminFraud: () => request<{ flags: unknown[] }>('/api/admin/fraud'),
+  updateAdminFraud: (id: string, payload: Record<string, unknown>) =>
+    request<{ flag: unknown }>(`/api/admin/fraud/${id}`, { method: 'PATCH', body: payload }),
+  adminNotifications: () => request<{ templates: unknown[] }>('/api/admin/notifications'),
+  updateAdminNotification: (id: string, payload: Record<string, unknown>) =>
+    request<{ template: unknown }>(`/api/admin/notifications/${id}`, { method: 'PATCH', body: payload }),
+  adminLanguages: () => request<{ languages: unknown[]; base: string }>('/api/admin/languages'),
+  updateAdminLanguages: (payload: Record<string, unknown>) =>
+    request<{ languages: unknown[]; base: string }>('/api/admin/languages', { method: 'PATCH', body: payload }),
+  adminTaxes: () => request<{ rules: unknown[] }>('/api/admin/taxes'),
+  createAdminTax: (payload: Record<string, unknown>) =>
+    request<{ rule: unknown }>('/api/admin/taxes', { method: 'POST', body: payload }),
+  adminLoyalty: () =>
+    request<{ config: Record<string, unknown>; liabilities: number; ledger: unknown[] }>('/api/admin/loyalty'),
+  updateAdminLoyalty: (payload: Record<string, unknown>) =>
+    request<{ config: Record<string, unknown> }>('/api/admin/loyalty', { method: 'PATCH', body: payload }),
+  adminReportsSummary: () => request<Record<string, unknown>>('/api/admin/reports/summary'),
+  adminRoles: () => request<{ roles: unknown[] }>('/api/admin/roles'),
+  updateAdminRole: (id: string, payload: Record<string, unknown>) =>
+    request<{ role: unknown }>(`/api/admin/roles/${id}`, { method: 'PATCH', body: payload }),
+  adminAudit: (q = '', entity = '') => {
+    const params = new URLSearchParams()
+    if (q) params.set('q', q)
+    if (entity) params.set('entity', entity)
+    const qs = params.toString()
+    return request<{ audit: unknown[]; count: number }>(`/api/admin/audit${qs ? `?${qs}` : ''}`)
+  },
 }
 
