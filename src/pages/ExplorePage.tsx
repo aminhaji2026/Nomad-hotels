@@ -79,43 +79,46 @@ export function ExplorePage() {
   }
 
   return (
-    <AppShell flush>
-      <div className="lux-top-line" aria-label="Browse by stay type">
-        <div className="lux-select-rail" ref={railRef} role="tablist" aria-label="Stay categories">
-          <span
-            className="lux-select-rail__indicator"
-            style={{ transform: `translateX(${indicator.left}px)`, width: indicator.width } as CSSProperties}
-            aria-hidden="true"
-          />
-          {categories.map((item, index) => {
-            const Icon = categoryIcons[item.id]
-            const active = category === item.id
-            return (
-              <button
-                key={item.id}
-                type="button"
-                role="tab"
-                aria-selected={active}
-                className={`lux-select${active ? ' is-active' : ''}`}
-                style={{ '--lux-i': index } as CSSProperties}
-                ref={(el) => {
-                  itemRefs.current[index] = el
-                }}
-                onClick={() => setCategory(item.id)}
-              >
-                <span className="lux-select__medal" aria-hidden="true">
-                  <span className="lux-select__ring" />
-                  <span className="lux-select__icon lux-icon">
-                    <Icon />
+    <AppShell
+      flush
+      topBar={
+        <div className="lux-top-line" aria-label="Browse by stay type">
+          <div className="lux-select-rail" ref={railRef} role="tablist" aria-label="Stay categories">
+            <span
+              className="lux-select-rail__indicator"
+              style={{ transform: `translateX(${indicator.left}px)`, width: indicator.width } as CSSProperties}
+              aria-hidden="true"
+            />
+            {categories.map((item, index) => {
+              const Icon = categoryIcons[item.id]
+              const active = category === item.id
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  className={`lux-select${active ? ' is-active' : ''}`}
+                  style={{ '--lux-i': index } as CSSProperties}
+                  ref={(el) => {
+                    itemRefs.current[index] = el
+                  }}
+                  onClick={() => setCategory(item.id)}
+                >
+                  <span className="lux-select__medal" aria-hidden="true">
+                    <span className="lux-select__ring" />
+                    <span className="lux-select__icon lux-icon">
+                      <Icon />
+                    </span>
                   </span>
-                </span>
-                <span className="lux-select__label">{item.short}</span>
-              </button>
-            )
-          })}
+                  <span className="lux-select__label">{item.short}</span>
+                </button>
+              )
+            })}
+          </div>
         </div>
-      </div>
-
+      }
+    >
       <section className="atelier-hero" aria-label="NomadStay introduction">
         <img
           className="atelier-hero__media"

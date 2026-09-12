@@ -99,17 +99,27 @@ p {
   height: 100vh;
   height: 100svh;
   position: relative;
+  display: flex;
+  flex-direction: column;
   background:
     linear-gradient(180deg, rgba(255, 252, 248, 0.92), rgba(245, 247, 243, 0.96)),
     var(--surface);
   box-shadow: var(--shadow);
-  overflow-x: clip;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  overflow: hidden;
   animation: shell-in 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+.app-shell__top {
+  flex: 0 0 auto;
+  z-index: 30;
+}
+
 .app-frame {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   padding-bottom: calc(var(--nav-h) + 1rem);
 }
 
@@ -1208,8 +1218,7 @@ p {
     min-height: 0;
     margin: 1rem auto;
     border-radius: 28px;
-    overflow-x: clip;
-    overflow-y: auto;
+    overflow: hidden;
     border: 1px solid rgba(212, 175, 55, 0.12);
   }
 
@@ -2344,9 +2353,6 @@ input:focus, select:focus, textarea:focus {
    ═══════════════════════════════════════════════════════════ */
 
 .lux-top-line {
-  position: sticky;
-  top: 0;
-  z-index: 40;
   padding: 0.55rem 0.7rem 0.45rem;
   background:
     linear-gradient(180deg, rgba(250, 247, 241, 0.98) 0%, rgba(245, 241, 234, 0.94) 100%);
