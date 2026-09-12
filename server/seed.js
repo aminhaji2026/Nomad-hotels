@@ -233,6 +233,77 @@ export const seedStays = [
     map: { lat: 4.1755, lng: 73.5093 },
     featured: true,
   },
+  {
+    id: 'hargeisa-courtyard-guest',
+    name: 'Hargeisa Courtyard Guest House',
+    city: 'Hargeisa',
+    country: 'Somaliland',
+    neighborhood: 'Sha’ab Area',
+    type: 'guest_house',
+    typeLabel: 'Guest House',
+    image:
+      'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1400&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1400&q=80',
+      'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80',
+    ],
+    nightlyFrom: 55,
+    rating: 4.6,
+    reviews: 96,
+    guestScore: 9.1,
+    badge: 'New',
+    amenities: ['Breakfast Included', 'Wi-Fi', 'Garden', 'Free Cancellation'],
+    highlights: ['Family-run', 'Courtyard', 'Home cooking', 'Wi-Fi'],
+    summary:
+      'A calm family guest house with leafy courtyard seating, home-cooked breakfast, and easy access to central Hargeisa.',
+    room: {
+      name: 'Garden Twin',
+      tag: 'Courtyard',
+      bed: 'Twin Beds',
+      guests: 2,
+      sizeSqm: 22,
+      image:
+        'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=800&q=80',
+      blurb: 'Bright twin room opening toward the courtyard, with desk and reliable Wi‑Fi.',
+    },
+    map: { lat: 9.5624, lng: 44.077 },
+    featured: true,
+  },
+  {
+    id: 'mogadishu-lighthouse-guest',
+    name: 'Lighthouse Guest House Mogadishu',
+    city: 'Mogadishu',
+    country: 'Somalia',
+    neighborhood: 'Lido · Lighthouse',
+    type: 'guest_house',
+    typeLabel: 'Guest House',
+    image:
+      'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1400&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1400&q=80',
+    ],
+    nightlyFrom: 70,
+    rating: 4.5,
+    reviews: 64,
+    guestScore: 8.9,
+    badge: null,
+    amenities: ['Wi-Fi', 'Security', 'Breakfast Included', 'Parking'],
+    highlights: ['Sea breeze', 'Secure compound', 'Host tips', 'Wi-Fi'],
+    summary:
+      'Intimate guest rooms near Lido with attentive hosts, secure parking, and breakfast on the terrace.',
+    room: {
+      name: 'Terrace Room',
+      tag: 'Sea air',
+      bed: 'Queen Bed',
+      guests: 2,
+      sizeSqm: 26,
+      image:
+        'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=800&q=80',
+      blurb: 'Queen bed, blackout curtains, and morning terrace tea.',
+    },
+    map: { lat: 2.0469, lng: 45.3182 },
+    featured: true,
+  },
 ]
 
 export const LOYALTY = {

@@ -115,7 +115,23 @@ export function ExplorePage() {
 
   function selectCategory(id: (typeof categories)[number]['id']) {
     setCategory(id)
-    if (id === 'vehicles') scrollFrameToId('maison-vehicles')
+    if (id === 'vehicles') {
+      scrollFrameToId('maison-vehicles')
+      return
+    }
+
+    // Category medals should open filtered results, not only highlight.
+    const type =
+      id === 'hotels' ? 'hotel' : id === 'holiday_homes' ? 'holiday_home' : 'guest_house'
+    const params = stayCriteriaSearchParams({
+      city: 'Anywhere',
+      checkIn,
+      checkOut,
+      occupancy,
+      category: id,
+      type,
+    })
+    navigate(`/results?${params.toString()}`)
   }
 
   function scrollToSearch() {

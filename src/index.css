@@ -3341,6 +3341,11 @@ input:focus, select:focus, textarea:focus {
   pointer-events: auto;
 }
 
+/* Keep the sliding medal indicator from swallowing taps on sibling categories */
+.app-shell--overlay-top .app-shell__top .lux-select-rail__indicator {
+  pointer-events: none !important;
+}
+
 .app-shell--overlay-top .app-frame {
   /* hero sits under the glass icons — no reserved blank strip */
   padding-top: 0;

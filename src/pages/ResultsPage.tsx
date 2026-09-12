@@ -117,7 +117,17 @@ export function ResultsPage() {
             ←
           </Link>
           <div className="results-header__title">
-            <strong>{isCarRental ? 'Car Rental' : city}</strong>
+            <strong>
+              {isCarRental
+                ? 'Car Rental'
+                : categoryParam === 'holiday_homes'
+                  ? 'Holiday homes'
+                  : categoryParam === 'guest_houses'
+                    ? 'Guest houses'
+                    : categoryParam === 'hotels'
+                      ? 'Hotels'
+                      : city}
+            </strong>
             <span>
               {checkIn.slice(5)} – {checkOut.slice(5)} · {formatOccupancyLabel(occupancy)}
             </span>
