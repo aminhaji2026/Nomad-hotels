@@ -16,7 +16,8 @@ import {
   authRequired,
   requireRoles,
 } from './auth.js'
-import { getGateway, PAYMENT_METHODS } from './payments.js'
+import { getGateway, PAYMENT_METHODS, applyPaymentIntegrations, getPaymentIntegrationStatus } from './payments.js'
+import { settleSplitPayment } from './settlement.js'
 import * as duffel from './duffel.js'
 import { ensurePlatformCollections, seedPlatformAdmin, registerPlatformAdmin } from './platformAdmin.js'
 
@@ -716,6 +717,7 @@ app.post('/api/bookings', async (req, res) => {
         reason: 'booking_loyalty',
         meta: { bookingRef, stayId: stay.id, amount },
       })
+      try { settleSplitPayment(db, booking, { uid }) } catch (e) { console.error('split settlement failed', e) }
     }
     saveDb(db)
     res.status(201).json({
@@ -745,6 +747,7 @@ app.post('/api/payments/webhooks/:gateway', async (req, res) => {
         booking.paymentStatus = 'PAID'
         booking.status = 'CONFIRMED'
         booking.updatedAt = new Date().toISOString()
+        try { settleSplitPayment(db, booking, { uid }) } catch (e) { console.error('split settlement failed', e) }
         const already = db.ledger.some(
           (l) => l.meta?.bookingRef === booking.bookingRef && l.reason === 'booking_loyalty',
         )
@@ -781,9 +784,10 @@ app.post('/api/payments/:id/confirm-demo', authRequired, (req, res) => {
     booking.paymentStatus = 'PAID'
     booking.status = 'CONFIRMED'
     booking.updatedAt = new Date().toISOString()
+    try { settleSplitPayment(db, booking, { uid }) } catch (e) { console.error('split settlement failed', e) }
   }
   saveDb(db)
-  res.json({ payment, booking })
+  res.json({ payment, booking, splitSettlement: booking?.splitSettlement || null })
 })
 
 // ── Duffel Stays ──
@@ -863,8 +867,9 @@ app.post('/api/duffel/bookings', authRequired, async (req, res) => {
       updatedAt: new Date().toISOString(),
     }
     db.bookings.unshift(booking)
+    try { settleSplitPayment(db, booking, { uid }) } catch (e) { console.error('split settlement failed', e) }
     saveDb(db)
-    res.status(201).json({ duffel: data, booking })
+    res.status(201).json({ duffel: data, booking, splitSettlement: booking.splitSettlement || null })
   } catch (err) {
     res.status(err.status || 400).json({ error: err.message })
   }
@@ -1359,23 +1364,48 @@ app.get('/api/admin/payments', authRequired, requireRoles('admin'), (_req, res) 
 
 app.get('/api/admin/settings', authRequired, requireRoles('admin'), (_req, res) => {
   const db = loadDb()
+  ensurePlatformCollections(db)
+  const integrations = db.settings.integrations || {}
+  const payStatus = getPaymentIntegrationStatus()
   res.json({
     settings: db.settings,
+    integrations,
     duffel: duffel.duffelStatus(),
     paymentMethods: PAYMENT_METHODS,
     env: {
-      zaadConfigured: Boolean(process.env.ZAAD_API_KEY),
-      internationalConfigured: Boolean(
-        process.env.INTERNATIONAL_GATEWAY_KEY || process.env.STRIPE_SECRET_KEY,
-      ),
-      duffelConfigured: duffel.duffelConfigured(),
+      zaadConfigured: payStatus.zaadConfigured || Boolean(process.env.ZAAD_API_KEY),
+      sifaloConfigured: payStatus.sifaloConfigured || Boolean(process.env.SIFALO_API_KEY),
+      internationalConfigured:
+        payStatus.internationalConfigured ||
+        Boolean(process.env.INTERNATIONAL_GATEWAY_KEY || process.env.STRIPE_SECRET_KEY),
+      duffelConfigured: Boolean(integrations.duffel?.accessToken) || duffel.duffelConfigured(),
     },
   })
 })
 
 app.patch('/api/admin/settings', authRequired, requireRoles('admin'), (req, res) => {
   const db = loadDb()
-  db.settings = { ...db.settings, ...(req.body || {}) }
+  ensurePlatformCollections(db)
+  const body = req.body || {}
+  const { integrations, ...rest } = body
+  db.settings = { ...db.settings, ...rest }
+  if (integrations && typeof integrations === 'object') {
+    db.settings.integrations = {
+      ...(db.settings.integrations || {}),
+      ...integrations,
+      zaad: { ...(db.settings.integrations?.zaad || {}), ...(integrations.zaad || {}) },
+      sifalo: { ...(db.settings.integrations?.sifalo || {}), ...(integrations.sifalo || {}) },
+      international: {
+        ...(db.settings.integrations?.international || {}),
+        ...(integrations.international || {}),
+      },
+      duffel: { ...(db.settings.integrations?.duffel || {}), ...(integrations.duffel || {}) },
+    }
+    applyPaymentIntegrations(db.settings.integrations)
+    if (db.settings.integrations.duffel?.accessToken) {
+      process.env.DUFFEL_ACCESS_TOKEN = String(db.settings.integrations.duffel.accessToken)
+    }
+  }
   audit(db, {
     actorId: req.auth.sub,
     action: 'UPDATE',
@@ -1383,7 +1413,11 @@ app.patch('/api/admin/settings', authRequired, requireRoles('admin'), (req, res)
     entityId: 'platform',
   })
   saveDb(db)
-  res.json({ settings: db.settings })
+  res.json({
+    settings: db.settings,
+    integrations: db.settings.integrations || {},
+    env: getPaymentIntegrationStatus(),
+  })
 })
 
 registerPlatformAdmin(app, {
@@ -1409,6 +1443,21 @@ app.use((err, _req, res, _next) => {
   console.error(err)
   res.status(400).json({ error: err.message || 'Request failed' })
 })
+
+
+// Apply saved payment / Duffel integration credentials from DB
+;(() => {
+  try {
+    const db = loadDb()
+    ensurePlatformCollections(db)
+    if (db.settings?.integrations) applyPaymentIntegrations(db.settings.integrations)
+    if (db.settings?.integrations?.duffel?.accessToken) {
+      process.env.DUFFEL_ACCESS_TOKEN = db.settings.integrations.duffel.accessToken
+    }
+  } catch (e) {
+    console.warn('Integration bootstrap skipped', e.message)
+  }
+})()
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`NomadStay API listening on :${PORT}`)

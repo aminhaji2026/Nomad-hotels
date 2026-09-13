@@ -226,9 +226,20 @@ export const api = {
   adminBookings: () => request<{ bookings: unknown[] }>('/api/admin/bookings'),
   adminPayments: () =>
     request<{ payments: unknown[]; methods: PaymentMethod[] }>('/api/admin/payments'),
-  adminSettings: () => request<Record<string, unknown>>('/api/admin/settings'),
+  adminSettings: () =>
+    request<{
+      settings: Record<string, unknown>
+      integrations?: Record<string, Record<string, string>>
+      env?: Record<string, unknown>
+      duffel?: Record<string, unknown>
+      paymentMethods?: unknown[]
+    }>('/api/admin/settings'),
   updateAdminSettings: (payload: Record<string, unknown>) =>
-    request<{ settings: Record<string, unknown> }>('/api/admin/settings', {
+    request<{
+      settings: Record<string, unknown>
+      integrations?: Record<string, Record<string, string>>
+      env?: Record<string, unknown>
+    }>('/api/admin/settings', {
       method: 'PATCH',
       body: payload,
     }),
@@ -241,6 +252,11 @@ export const api = {
     request<{ applications: unknown[]; count: number }>(
       `/api/admin/applications?status=${encodeURIComponent(status)}`,
     ),
+  createAdminApplication: (payload: Record<string, unknown>) =>
+    request<{ application: unknown; stay: unknown }>('/api/admin/applications', {
+      method: 'POST',
+      body: payload,
+    }),
   updateAdminApplication: (id: string, payload: Record<string, unknown>) =>
     request<{ application: unknown }>(`/api/admin/applications/${id}`, { method: 'PATCH', body: payload }),
   adminCustomers: (q = '') =>
