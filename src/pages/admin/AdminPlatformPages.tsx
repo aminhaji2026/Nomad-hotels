@@ -30,6 +30,19 @@ export function AdminOnboardingPage() {
   const [selected, setSelected] = useState<Row | null>(null)
   const [note, setNote] = useState('')
   const [message, setMessage] = useState<string | null>(null)
+  const [form, setForm] = useState({
+    propertyName: '',
+    type: 'hotel',
+    city: '',
+    country: 'Somaliland',
+    ownerName: '',
+    ownerEmail: '',
+    ownerPhone: '',
+    nightlyFrom: '80',
+    commissionRate: '0.12',
+    payoutAccount: '',
+    summary: '',
+  })
 
   async function load() {
     const data = await api.adminApplications(status)
@@ -47,14 +60,137 @@ export function AdminOnboardingPage() {
     await load()
   }
 
+  async function registerProperty(event: FormEvent) {
+    event.preventDefault()
+    await api.createAdminApplication({
+      ...form,
+      nightlyFrom: Number(form.nightlyFrom),
+      commissionRate: Number(form.commissionRate),
+    })
+    setMessage('Property registration submitted')
+    setForm({
+      propertyName: '',
+      type: 'hotel',
+      city: '',
+      country: 'Somaliland',
+      ownerName: '',
+      ownerEmail: '',
+      ownerPhone: '',
+      nightlyFrom: '80',
+      commissionRate: '0.12',
+      payoutAccount: '',
+      summary: '',
+    })
+    setStatus('submitted')
+    await load()
+  }
+
   return (
     <div className="ops-page">
       <PageHeader
-        kicker="Hotel onboarding"
-        title="Applications"
-        subtitle="Review documents, verify locations, approve or reject hotel applications."
+        kicker="Hotel registration"
+        title="Property onboarding"
+        subtitle="Register hotels, guest houses, holiday homes, and car rentals, then approve them onto the network."
       />
       <Toast message={message} />
+
+      <form className="ops-panel" onSubmit={registerProperty}>
+        <h2>Register a property</h2>
+        <div className="ops-form-grid">
+          <label>
+            Property name
+            <input
+              required
+              value={form.propertyName}
+              onChange={(e) => setForm({ ...form, propertyName: e.target.value })}
+            />
+          </label>
+          <label>
+            Type
+            <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
+              <option value="hotel">Hotel</option>
+              <option value="guest_house">Guest house</option>
+              <option value="holiday_home">Holiday home</option>
+              <option value="car_rental">Car rental</option>
+            </select>
+          </label>
+          <label>
+            City
+            <input required value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
+          </label>
+          <label>
+            Country
+            <input
+              required
+              value={form.country}
+              onChange={(e) => setForm({ ...form, country: e.target.value })}
+            />
+          </label>
+          <label>
+            Owner name
+            <input
+              required
+              value={form.ownerName}
+              onChange={(e) => setForm({ ...form, ownerName: e.target.value })}
+            />
+          </label>
+          <label>
+            Owner email
+            <input
+              required
+              type="email"
+              value={form.ownerEmail}
+              onChange={(e) => setForm({ ...form, ownerEmail: e.target.value })}
+            />
+          </label>
+          <label>
+            Owner phone
+            <input value={form.ownerPhone} onChange={(e) => setForm({ ...form, ownerPhone: e.target.value })} />
+          </label>
+          <label>
+            Nightly from / day rate
+            <input
+              type="number"
+              min="1"
+              value={form.nightlyFrom}
+              onChange={(e) => setForm({ ...form, nightlyFrom: e.target.value })}
+            />
+          </label>
+          <label>
+            Commission rate
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              max="1"
+              value={form.commissionRate}
+              onChange={(e) => setForm({ ...form, commissionRate: e.target.value })}
+            />
+          </label>
+          <label>
+            Payout account / wallet
+            <input
+              value={form.payoutAccount}
+              onChange={(e) => setForm({ ...form, payoutAccount: e.target.value })}
+              placeholder="ZAAD / Sifalo / bank account"
+            />
+          </label>
+        </div>
+        <label>
+          Summary
+          <textarea
+            rows={3}
+            value={form.summary}
+            onChange={(e) => setForm({ ...form, summary: e.target.value })}
+          />
+        </label>
+        <div className="ops-form-actions">
+          <button className="btn btn--gold" type="submit">
+            Submit registration
+          </button>
+        </div>
+      </form>
+
       <div className="ops-toolbar">
         <select value={status} onChange={(e) => setStatus(e.target.value)} aria-label="Filter status">
           <option value="all">All statuses</option>
@@ -73,7 +209,8 @@ export function AdminOnboardingPage() {
               <div>
                 <strong>{String(app.propertyName)}</strong>
                 <p className="muted small">
-                  {String(app.city)}, {String(app.country)} · {String(app.status)} · {Number(app.progress || 0)}%
+                  {String(app.city)}, {String(app.country)} · {String(app.typeLabel || app.type)} ·{' '}
+                  {String(app.status)} · {Number(app.progress || 0)}%
                 </p>
               </div>
               <button type="button" className="btn btn--ghost" onClick={() => setSelected(app)}>
@@ -124,11 +261,11 @@ export function AdminOnboardingPage() {
                 void act(
                   String(selected.id),
                   { status: 'approved', reviewerNote: note || 'Approved after review' },
-                  'Application approved',
+                  'Application approved — property published',
                 )
               }
             >
-              Approve
+              Approve & publish
             </button>
             <button
               type="button"
@@ -149,7 +286,11 @@ export function AdminOnboardingPage() {
               onClick={() =>
                 void act(
                   String(selected.id),
-                  { status: 'rejected', rejectionReason: note || 'Did not meet standards', reviewerNote: note },
+                  {
+                    status: 'rejected',
+                    rejectionReason: note || 'Did not meet standards',
+                    reviewerNote: note,
+                  },
                   'Application rejected',
                 )
               }
@@ -165,6 +306,7 @@ export function AdminOnboardingPage() {
     </div>
   )
 }
+
 
 export function AdminCustomersPage() {
   const [rows, setRows] = useState<Row[]>([])
@@ -749,12 +891,14 @@ function SimpleListPage({
   subtitle,
   load,
   render,
+  create,
 }: {
   kicker: string
   title: string
   subtitle: string
   load: () => Promise<{ rows: Row[]; extra?: ReactNode }>
   render: (row: Row, reload: () => void) => ReactNode
+  create?: (reload: () => void) => ReactNode
 }) {
   const [rows, setRows] = useState<Row[]>([])
   const [extra, setExtra] = useState<ReactNode>(null)
@@ -769,6 +913,7 @@ function SimpleListPage({
   return (
     <div className="ops-page">
       <PageHeader kicker={kicker} title={title} subtitle={subtitle} />
+      {create ? create(() => void refresh()) : null}
       {extra}
       <div className="ops-panel">
         <ul className="ops-list ops-list--plain">
@@ -782,12 +927,66 @@ function SimpleListPage({
   )
 }
 
+
+function CreatePromotionForm({ onCreated }: { onCreated: () => void }) {
+  const [name, setName] = useState('')
+  const [code, setCode] = useState('')
+  const [value, setValue] = useState('10')
+  const [message, setMessage] = useState<string | null>(null)
+  return (
+    <form
+      className="ops-panel"
+      onSubmit={(e) => {
+        e.preventDefault()
+        void api
+          .createAdminPromotion({
+            name,
+            code,
+            type: 'percent',
+            value: Number(value),
+            usageLimit: 100,
+            status: 'active',
+          })
+          .then(() => {
+            setMessage('Promotion created')
+            setName('')
+            setCode('')
+            onCreated()
+          })
+      }}
+    >
+      <h2>Create promotion</h2>
+      {message && <p className="ops-toast">{message}</p>}
+      <div className="ops-form-grid">
+        <label>
+          Name
+          <input required value={name} onChange={(e) => setName(e.target.value)} />
+        </label>
+        <label>
+          Code
+          <input required value={code} onChange={(e) => setCode(e.target.value)} />
+        </label>
+        <label>
+          Percent off
+          <input type="number" min="1" value={value} onChange={(e) => setValue(e.target.value)} />
+        </label>
+      </div>
+      <div className="ops-form-actions">
+        <button className="btn btn--gold" type="submit">
+          Create
+        </button>
+      </div>
+    </form>
+  )
+}
+
 export function AdminPromotionsPage() {
   return (
     <SimpleListPage
       kicker="Promotions"
       title="Campaigns & coupons"
       subtitle="Platform and hotel-funded offers with usage limits and stacking controls."
+      create={(reload) => <CreatePromotionForm onCreated={reload} />}
       load={async () => {
         const data = await api.adminPromotions()
         return { rows: data.promotions as Row[] }

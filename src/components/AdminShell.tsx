@@ -1,12 +1,13 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { BrandLockup } from './AppShell'
 
-type AdminShellProps = {
-  variant: 'hotel' | 'platform'
-}
+type LinkItem = { to: string; label: string; end?: boolean }
 
-const hotelLinks = [
+type Group = { id: string; label: string; links: LinkItem[] }
+
+const hotelLinks: LinkItem[] = [
   { to: '/hotel-admin', end: true, label: 'Overview' },
   { to: '/hotel-admin/bookings', label: 'Bookings' },
   { to: '/hotel-admin/rooms', label: 'Rooms & rates' },
@@ -15,8 +16,9 @@ const hotelLinks = [
   { to: '/hotel-admin/messages', label: 'Messages' },
 ]
 
-const platformGroups = [
+const platformGroups: Group[] = [
   {
+    id: 'command',
     label: 'Command',
     links: [
       { to: '/admin', end: true, label: 'Executive' },
@@ -25,15 +27,17 @@ const platformGroups = [
     ],
   },
   {
+    id: 'network',
     label: 'Network',
     links: [
       { to: '/admin/hotels', label: 'Hotels' },
-      { to: '/admin/onboarding', label: 'Onboarding' },
+      { to: '/admin/onboarding', label: 'Hotel registration' },
       { to: '/admin/users', label: 'Staff' },
       { to: '/admin/customers', label: 'Customers' },
     ],
   },
   {
+    id: 'commerce',
     label: 'Commerce',
     links: [
       { to: '/admin/bookings', label: 'Reservations' },
@@ -47,6 +51,7 @@ const platformGroups = [
     ],
   },
   {
+    id: 'growth',
     label: 'Growth',
     links: [
       { to: '/admin/promotions', label: 'Promotions' },
@@ -56,6 +61,7 @@ const platformGroups = [
     ],
   },
   {
+    id: 'content',
     label: 'Content',
     links: [
       { to: '/admin/cms', label: 'CMS' },
@@ -64,6 +70,7 @@ const platformGroups = [
     ],
   },
   {
+    id: 'ops',
     label: 'Ops',
     links: [
       { to: '/admin/support', label: 'Support' },
@@ -72,6 +79,7 @@ const platformGroups = [
     ],
   },
   {
+    id: 'system',
     label: 'System',
     links: [
       { to: '/admin/languages', label: 'Languages' },
@@ -79,14 +87,73 @@ const platformGroups = [
       { to: '/admin/roles', label: 'Roles' },
       { to: '/admin/audit', label: 'Audit' },
       { to: '/admin/duffel', label: 'Duffel Stay' },
-      { to: '/admin/settings', label: 'Settings' },
+      { to: '/admin/settings', label: 'Integrations & settings' },
     ],
   },
 ]
 
-export function AdminShell({ variant }: AdminShellProps) {
+function NavDropdown({ group, open, onToggle }: { group: Group; open: boolean; onToggle: () => void }) {
+  const location = useLocation()
+  const active = group.links.some((link) =>
+    link.end ? location.pathname === link.to : location.pathname === link.to || location.pathname.startsWith(`${link.to}/`),
+  )
+  const panelRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    function onDoc(e: MouseEvent) {
+      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
+        onToggle()
+      }
+    }
+    document.addEventListener('mousedown', onDoc)
+    return () => document.removeEventListener('mousedown', onDoc)
+  }, [open, onToggle])
+
+  return (
+    <div className={`ops-dd ${open ? 'is-open' : ''} ${active ? 'is-active' : ''}`} ref={panelRef}>
+      <button
+        type="button"
+        className="ops-dd__btn"
+        aria-expanded={open}
+        aria-haspopup="menu"
+        onClick={onToggle}
+      >
+        <span>{group.label}</span>
+        <span className="ops-dd__chev" aria-hidden>
+          ▾
+        </span>
+      </button>
+      {open && (
+        <div className="ops-dd__menu" role="menu">
+          {group.links.map((link) => (
+            <NavLink
+              key={link.to}
+              to={link.to}
+              end={Boolean(link.end)}
+              role="menuitem"
+              onClick={() => {
+                if (open) onToggle()
+              }}
+            >
+              {link.label}
+            </NavLink>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+export function AdminShell({ variant }: { variant: 'hotel' | 'platform' }) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
+  const [openId, setOpenId] = useState<string | null>(null)
+
+  useEffect(() => {
+    setOpenId(null)
+  }, [location.pathname])
 
   return (
     <div className="app-shell app-shell--bare">
@@ -94,9 +161,7 @@ export function AdminShell({ variant }: AdminShellProps) {
         <header className="top-bar ops-top">
           <div className="ops-top__brand">
             <BrandLockup compact />
-            <span className="ops-top__badge">
-              {variant === 'hotel' ? 'Hotel suite' : 'Platform control'}
-            </span>
+            <span className="ops-top__badge">{variant === 'hotel' ? 'Hotel suite' : 'Platform control'}</span>
           </div>
           <button
             type="button"
@@ -113,24 +178,20 @@ export function AdminShell({ variant }: AdminShellProps) {
         {variant === 'hotel' ? (
           <nav className="ops-tabs" aria-label="Hotel admin">
             {hotelLinks.map((link) => (
-              <NavLink key={link.to} to={link.to} end={'end' in link ? link.end : false}>
+              <NavLink key={link.to} to={link.to} end={Boolean(link.end)}>
                 {link.label}
               </NavLink>
             ))}
           </nav>
         ) : (
-          <nav className="ops-nav" aria-label="Platform admin">
+          <nav className="ops-nav ops-nav--dropdowns" aria-label="Platform admin">
             {platformGroups.map((group) => (
-              <div key={group.label} className="ops-nav__group">
-                <p className="ops-nav__label">{group.label}</p>
-                <div className="ops-nav__links">
-                  {group.links.map((link) => (
-                    <NavLink key={link.to} to={link.to} end={'end' in link ? link.end : false}>
-                      {link.label}
-                    </NavLink>
-                  ))}
-                </div>
-              </div>
+              <NavDropdown
+                key={group.id}
+                group={group}
+                open={openId === group.id}
+                onToggle={() => setOpenId((cur) => (cur === group.id ? null : group.id))}
+              />
             ))}
           </nav>
         )}

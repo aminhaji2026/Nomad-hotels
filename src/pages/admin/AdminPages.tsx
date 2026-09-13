@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { Link } from 'react-router-dom'
 import { api, type ApiStay, type AuthUser, type PaymentMethod } from '../../api'
 import { useAuth } from '../../context/AuthContext'
 
@@ -316,6 +317,9 @@ export function AdminHotelsPage() {
           <h1>Hotels</h1>
           <p className="muted">Search, feature, suspend, note, and archive properties across the network.</p>
         </div>
+        <Link className="btn btn--gold" to="/admin/onboarding">
+          Register property
+        </Link>
       </header>
       {message && <p className="ops-toast">{message}</p>}
 
@@ -825,11 +829,11 @@ export function AdminDuffelPage() {
       <div className="ops-panel">
         <h2>Connection</h2>
         <p>
-          Mode: <strong>{String(status?.mode || '…')}</strong>
+          Mode: <strong>{String(status?.mode || status?.mode || '…')}</strong>
         </p>
         <p className="muted small">
-          Set <code>DUFFEL_ACCESS_TOKEN</code> for live searches. Without it, NomadStay returns rich mock
-          inventory so the booking flow still works.
+          Add the Duffel access token under <a href="/admin/settings">Integrations &amp; settings</a>.
+          Without a token, NomadStay returns rich mock inventory so the booking flow still works.
         </p>
       </div>
       <form className="ops-panel" onSubmit={onSearch}>
@@ -875,21 +879,52 @@ export function AdminDuffelPage() {
 
 export function AdminSettingsPage() {
   const [settings, setSettings] = useState<Record<string, unknown>>({})
+  const [integrations, setIntegrations] = useState<Record<string, Record<string, string>>>({
+    sifalo: {},
+    zaad: {},
+    international: {},
+    duffel: {},
+  })
   const [env, setEnv] = useState<Record<string, unknown>>({})
   const [message, setMessage] = useState<string | null>(null)
 
   useEffect(() => {
     void api.adminSettings().then((d) => {
       setSettings((d.settings as Record<string, unknown>) || {})
+      const integ = (d.integrations as Record<string, Record<string, string>>) || {}
+      setIntegrations({
+        sifalo: { ...(integ.sifalo || {}) },
+        zaad: { ...(integ.zaad || {}) },
+        international: { ...(integ.international || {}) },
+        duffel: { ...(integ.duffel || {}) },
+      })
       setEnv((d.env as Record<string, unknown>) || {})
     })
   }, [])
 
+  function setIntegration(provider: string, key: string, value: string) {
+    setIntegrations((prev) => ({
+      ...prev,
+      [provider]: { ...(prev[provider] || {}), [key]: value },
+    }))
+  }
+
   async function onSave(event: FormEvent) {
     event.preventDefault()
-    const data = await api.updateAdminSettings(settings)
+    const data = await api.updateAdminSettings({ ...settings, integrations })
     setSettings(data.settings)
-    setMessage('Settings saved')
+    if (data.integrations) {
+      setIntegrations({
+        sifalo: { ...((data.integrations as Record<string, Record<string, string>>).sifalo || {}) },
+        zaad: { ...((data.integrations as Record<string, Record<string, string>>).zaad || {}) },
+        international: {
+          ...((data.integrations as Record<string, Record<string, string>>).international || {}),
+        },
+        duffel: { ...((data.integrations as Record<string, Record<string, string>>).duffel || {}) },
+      })
+    }
+    if (data.env) setEnv(data.env as Record<string, unknown>)
+    setMessage('Settings and integration credentials saved')
   }
 
   return (
@@ -897,77 +932,166 @@ export function AdminSettingsPage() {
       <header className="ops-header">
         <div>
           <p className="ops-kicker">Configuration</p>
-          <h1>Platform settings</h1>
-          <p className="muted">Brand, currency, default gateway, and integration readiness.</p>
+          <h1>Integrations & settings</h1>
+          <p className="muted">
+            Brand defaults plus editable Sifalo, ZAAD, card, and Duffel Stay connection details.
+          </p>
         </div>
       </header>
       {message && <p className="ops-toast">{message}</p>}
+
       <form className="ops-panel" onSubmit={onSave}>
-        <label>
-          Platform name
-          <input
-            value={String(settings.platformName || '')}
-            onChange={(e) => setSettings({ ...settings, platformName: e.target.value })}
-          />
-        </label>
-        <label>
-          Support email
-          <input
-            value={String(settings.supportEmail || '')}
-            onChange={(e) => setSettings({ ...settings, supportEmail: e.target.value })}
-          />
-        </label>
-        <label>
-          Default currency
-          <input
-            value={String(settings.defaultCurrency || 'USD')}
-            onChange={(e) => setSettings({ ...settings, defaultCurrency: e.target.value })}
-          />
-        </label>
-        <label>
-          Default gateway
-          <select
-            value={String(settings.defaultGateway || 'mock')}
-            onChange={(e) => setSettings({ ...settings, defaultGateway: e.target.value })}
-          >
-            <option value="mock">Mock (demo)</option>
-            <option value="zaad">ZAAD</option>
-            <option value="international">International card</option>
-          </select>
-        </label>
-        <button className="btn btn--gold" type="submit">
-          Save settings
-        </button>
+        <h2>Platform</h2>
+        <div className="ops-form-grid">
+          <label>
+            Platform name
+            <input
+              value={String(settings.platformName || '')}
+              onChange={(e) => setSettings({ ...settings, platformName: e.target.value })}
+            />
+          </label>
+          <label>
+            Support email
+            <input
+              value={String(settings.supportEmail || '')}
+              onChange={(e) => setSettings({ ...settings, supportEmail: e.target.value })}
+            />
+          </label>
+          <label>
+            Default currency
+            <input
+              value={String(settings.defaultCurrency || 'USD')}
+              onChange={(e) => setSettings({ ...settings, defaultCurrency: e.target.value })}
+            />
+          </label>
+          <label>
+            Default gateway
+            <select
+              value={String(settings.defaultGateway || 'mock')}
+              onChange={(e) => setSettings({ ...settings, defaultGateway: e.target.value })}
+            >
+              <option value="mock">Mock (demo)</option>
+              <option value="sifalo">Sifalo</option>
+              <option value="zaad">ZAAD</option>
+              <option value="international">International card</option>
+            </select>
+          </label>
+          <label>
+            Default commission rate
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              max="1"
+              value={String(settings.defaultCommissionRate ?? 0.12)}
+              onChange={(e) =>
+                setSettings({ ...settings, defaultCommissionRate: Number(e.target.value) })
+              }
+            />
+          </label>
+        </div>
+
+        <h2 style={{ marginTop: '1.25rem' }}>Sifalo payment</h2>
+        <p className="muted small">
+          Status: {env.sifaloConfigured ? 'Configured' : 'Not configured'} — used for guest checkout and
+          automatic split settlement to hotels, guest houses, holiday homes, and car rentals.
+        </p>
+        <div className="ops-form-grid">
+          <label>
+            API key
+            <input
+              value={String(integrations.sifalo?.apiKey || '')}
+              onChange={(e) => setIntegration('sifalo', 'apiKey', e.target.value)}
+              placeholder="sifalo_live_…"
+              autoComplete="off"
+            />
+          </label>
+          <label>
+            Merchant ID
+            <input
+              value={String(integrations.sifalo?.merchantId || '')}
+              onChange={(e) => setIntegration('sifalo', 'merchantId', e.target.value)}
+            />
+          </label>
+          <label>
+            Base URL
+            <input
+              value={String(integrations.sifalo?.baseUrl || 'https://api.sifalo.com')}
+              onChange={(e) => setIntegration('sifalo', 'baseUrl', e.target.value)}
+            />
+          </label>
+          <label>
+            Webhook secret
+            <input
+              value={String(integrations.sifalo?.webhookSecret || '')}
+              onChange={(e) => setIntegration('sifalo', 'webhookSecret', e.target.value)}
+              autoComplete="off"
+            />
+          </label>
+        </div>
+
+        <h2 style={{ marginTop: '1.25rem' }}>ZAAD mobile money</h2>
+        <p className="muted small">Status: {env.zaadConfigured ? 'Configured' : 'Not configured'}</p>
+        <div className="ops-form-grid">
+          <label>
+            API key
+            <input
+              value={String(integrations.zaad?.apiKey || '')}
+              onChange={(e) => setIntegration('zaad', 'apiKey', e.target.value)}
+              autoComplete="off"
+            />
+          </label>
+          <label>
+            Merchant ID
+            <input
+              value={String(integrations.zaad?.merchantId || '')}
+              onChange={(e) => setIntegration('zaad', 'merchantId', e.target.value)}
+            />
+          </label>
+        </div>
+
+        <h2 style={{ marginTop: '1.25rem' }}>International cards</h2>
+        <p className="muted small">
+          Status: {env.internationalConfigured ? 'Configured' : 'Not configured'}
+        </p>
+        <div className="ops-form-grid">
+          <label>
+            Gateway / Stripe secret key
+            <input
+              value={String(integrations.international?.apiKey || '')}
+              onChange={(e) => setIntegration('international', 'apiKey', e.target.value)}
+              autoComplete="off"
+            />
+          </label>
+        </div>
+
+        <h2 style={{ marginTop: '1.25rem' }}>Duffel Stay</h2>
+        <p className="muted small">Status: {env.duffelConfigured ? 'Configured' : 'Not configured'}</p>
+        <div className="ops-form-grid">
+          <label>
+            Access token
+            <input
+              value={String(integrations.duffel?.accessToken || '')}
+              onChange={(e) => setIntegration('duffel', 'accessToken', e.target.value)}
+              placeholder="duffel_test_… or duffel_live_…"
+              autoComplete="off"
+            />
+          </label>
+          <label>
+            API version
+            <input
+              value={String(integrations.duffel?.version || 'v2')}
+              onChange={(e) => setIntegration('duffel', 'version', e.target.value)}
+            />
+          </label>
+        </div>
+
+        <div className="ops-form-actions">
+          <button className="btn btn--gold" type="submit">
+            Save integrations
+          </button>
+        </div>
       </form>
-      <div className="ops-panel">
-        <h2>Integration readiness</h2>
-        <ul className="ops-list ops-list--plain">
-          <li>
-            <div>
-              <strong>ZAAD</strong>
-              <p className="muted small">{env.zaadConfigured ? 'Configured' : 'Needs ZAAD_API_KEY'}</p>
-            </div>
-          </li>
-          <li>
-            <div>
-              <strong>International cards</strong>
-              <p className="muted small">
-                {env.internationalConfigured
-                  ? 'Configured'
-                  : 'Needs INTERNATIONAL_GATEWAY_KEY or STRIPE_SECRET_KEY'}
-              </p>
-            </div>
-          </li>
-          <li>
-            <div>
-              <strong>Duffel Stay</strong>
-              <p className="muted small">
-                {env.duffelConfigured ? 'Configured' : 'Needs DUFFEL_ACCESS_TOKEN'}
-              </p>
-            </div>
-          </li>
-        </ul>
-      </div>
     </div>
   )
 }

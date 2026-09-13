@@ -586,7 +586,109 @@ export function registerPlatformAdmin(app, deps) {
     }),
   )
 
-  app.patch(
+  
+  app.post(
+    '/api/admin/applications',
+    ...guard,
+    run((req, res, db) => {
+      const body = req.body || {}
+      const propertyName = String(body.propertyName || body.name || '').trim()
+      const city = String(body.city || '').trim()
+      const country = String(body.country || '').trim()
+      const ownerName = String(body.ownerName || '').trim()
+      const ownerEmail = String(body.ownerEmail || '').trim().toLowerCase()
+      if (!propertyName || !city || !ownerName || !ownerEmail) {
+        return res.status(400).json({ error: 'propertyName, city, ownerName, and ownerEmail are required' })
+      }
+      const type = String(body.type || 'hotel')
+      const typeLabel =
+        body.typeLabel ||
+        ({
+          hotel: 'Hotel',
+          guest_house: 'Guest house',
+          holiday_home: 'Holiday home',
+          car_rental: 'Car rental',
+        }[type] || 'Property')
+      const now = new Date().toISOString()
+      const application = {
+        id: uid('app_'),
+        propertyName,
+        city,
+        country: country || 'Somaliland',
+        type,
+        typeLabel,
+        ownerName,
+        ownerEmail,
+        ownerPhone: String(body.ownerPhone || ''),
+        status: 'submitted',
+        progress: 35,
+        assignedTo: null,
+        documents: [
+          { id: 'doc_reg', label: 'Business registration', status: body.registrationDoc ? 'received' : 'missing' },
+          { id: 'doc_id', label: 'Owner identification', status: 'missing' },
+          { id: 'doc_bank', label: 'Bank & payout details', status: body.payoutAccount ? 'received' : 'missing' },
+          { id: 'doc_license', label: 'Operating licence', status: 'missing' },
+          { id: 'doc_tax', label: 'Tax information', status: 'missing' },
+          { id: 'doc_contract', label: 'Commission agreement', status: 'missing' },
+        ],
+        checklist: [
+          { id: 'loc', label: 'Verify location', done: false },
+          { id: 'rooms', label: 'Verify inventory / rooms', done: false },
+          { id: 'photos', label: 'Review property photos', done: false },
+          { id: 'bank', label: 'Verify payout beneficiary', done: false },
+        ],
+        reviewerNotes: [],
+        photos: Array.isArray(body.photos) ? body.photos : [],
+        commissionRate: Number(body.commissionRate ?? db.settings?.defaultCommissionRate ?? 0.12),
+        payoutAccount: body.payoutAccount || null,
+        nightlyFrom: Number(body.nightlyFrom || body.nightlyRate || 50),
+        verificationExpiresAt: null,
+        submittedAt: now,
+        updatedAt: now,
+      }
+      db.applications.unshift(application)
+
+      const stayId = uid('stay_')
+      const stay = {
+        id: stayId,
+        name: propertyName,
+        city,
+        country: application.country,
+        neighborhood: body.neighborhood || city,
+        type,
+        typeLabel,
+        image: application.photos[0] || '/hotels/damal/exterior.jpg',
+        gallery: application.photos,
+        nightlyFrom: application.nightlyFrom,
+        rating: 0,
+        reviews: 0,
+        amenities: body.amenities || ['Wi-Fi'],
+        highlights: ['New applicant'],
+        summary: body.summary || `${propertyName} — pending platform approval.`,
+        featured: false,
+        status: 'pending',
+        applicationId: application.id,
+        ownerEmail,
+        ownerPhone: application.ownerPhone,
+        commissionRate: application.commissionRate,
+        payoutAccount: application.payoutAccount,
+        createdAt: now,
+        updatedAt: now,
+      }
+      db.stays.unshift(stay)
+      audit(db, {
+        actorId: req.auth.sub,
+        action: 'CREATE',
+        entity: 'Application',
+        entityId: application.id,
+        meta: { propertyName, type },
+      })
+      saveDb(db)
+      res.status(201).json({ application, stay })
+    }),
+  )
+
+app.patch(
     '/api/admin/applications/:id',
     ...guard,
     run((req, res, db) => {
